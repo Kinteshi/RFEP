@@ -5,7 +5,7 @@ import os.path
 from subprocess import check_output
 from collections import defaultdict
 # import rpy2.robjects as robjects
-import rpy2.robjects as robjects
+# import rpy2.robjects as robjects
 import numpy as np
 import re
 from subprocess import call

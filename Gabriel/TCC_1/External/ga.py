@@ -354,7 +354,7 @@ class Arquive:
 def nFeaturesColection(dataset):
     nFeatures = 0
 
-    dataset = dataset.replace("../Colecoes/",  "")
+    dataset = dataset.replace("/mnt/c/Users/jefma/Documents/GitHub/PIBIC/Gabriel/TCC_1/",  "")
     if dataset=="web10k":
         nFeatures = 136
     elif dataset=="2003_td_dataset":
@@ -443,7 +443,7 @@ def geradorRelatorioValidacao(path, ntrees, fold):
                 vetor_trisk.append(temp_trisk)
                 vetor_tempo.append(temp_tempo)
 
-    name_arq = './FinalResults/' + path + '/' + str(ntrees) + '/relatorio_validacao_fold_' + str(fold) + '.csv'
+    name_arq = path + '' + str(ntrees) + 'relatorio_validacao_fold_' + str(fold) + '.csv'
 
     arquivo = open(name_arq, 'w')
     arquivo.write("Geracao,Maior NDCG, Menor NDCG, Media NDCG, Variancia NDCG, Maior TRISK, Menor TRISK, Media TRISK, Variancia TRISK, Individuo Novo, "
@@ -501,7 +501,7 @@ def geradorRelatorioFinal(path, ntrees):
 
 
 
-    name_arq = './FinalResults/' + path + '/' + str(ntrees) + '/relatorio_final' + '.csv'
+    name_arq = 'FinalResults' + str(ntrees) + 'relatorio_final' + '.csv'
 
     arquivo = open(name_arq, 'w')
     arquivo.write("Fold,NDCG Test, Tempo do Otimizado\n")

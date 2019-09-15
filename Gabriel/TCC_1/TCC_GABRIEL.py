@@ -1,7 +1,8 @@
 import errno
 import numpy
 import os
-import csv, sys
+import csv
+import sys
 
 import pickle
 
@@ -13,6 +14,7 @@ from External.h_functionsFilter import basicStructure, obtainDominace
 from External.h_l2rMeasures import modelEvaluation, getTRisk
 from External.h_l2rMiscellaneous import load_L2R_file
 from ScikitLearnLocalModificado.forest import Forest
+
 
 def setScoreGen(forest, population, metrica, fileCache, Vetores_Vali, numTrees, sizeGen, nFeatures):
 
@@ -93,18 +95,19 @@ def main(colecao, fold, metrica, numTrees, original_geracoes_comparar, superMask
 
     nFeatures = nFeaturesColection(colecao)
     MASK = [1] * nFeatures
-    sizeGen=75
+    sizeGen = 75
     '''
     Instacia as Classes
     Algoritmo Genetico e o RandomForest Modificado
     '''
-    oGA = GeneticAlgorithm(sizeGen=sizeGen, numTrees=numTrees, typeScore=metrica, elitist=1)
+    oGA = GeneticAlgorithm(
+        sizeGen=sizeGen, numTrees=numTrees, typeScore=metrica, elitist=1)
     forest = Forest(n_estimators=numTrees, n_jobs=-1)
 
     numGeneration = original_geracoes_comparar
 
-    fileCache = colecao.replace("../Colecoes",  "./TreesRF")  + "/AllTrees" + str(numTrees) + "Fold" + str(fold) + ".pickle"
-
+    fileCache = colecao.replace("../Colecoes",  "./TreesRF") + \
+        "/AllTrees" + str(numTrees) + "Fold" + str(fold) + ".pickle"
 
     # Verifica se ja possui arvores criadas
     #  Se não as cria
@@ -124,7 +127,6 @@ def main(colecao, fold, metrica, numTrees, original_geracoes_comparar, superMask
         with open(fileCache, 'wb') as pFile:
             pickle.dump(trees, pFile)
 
-
     X2, y2, z2 = load_L2R_file(name_vali, MASK)
     Vetores_Vali = ChangeName(X2, y2, z2)
 
@@ -132,14 +134,12 @@ def main(colecao, fold, metrica, numTrees, original_geracoes_comparar, superMask
     X3, y3, z3 = load_L2R_file(name_test, MASK)
     Vetores_Test = ChangeName(X3, y3, z3)
 
-
-
-
     if original_geracoes_comparar > 1:
 
         #  Criando e dando o Score para a geracao inicial
         oGA.generatePopulation()
-        oGA.population = setScoreGen(forest, oGA.population , metrica, fileCache, Vetores_Vali, numTrees, sizeGen, nFeatures)
+        oGA.population = setScoreGen(
+            forest, oGA.population, metrica, fileCache, Vetores_Vali, numTrees, sizeGen, nFeatures)
 
         # Armazena no Arquive
         bag = Arquive(oGA.sizeGen * 2, metrica)
@@ -159,17 +159,20 @@ def main(colecao, fold, metrica, numTrees, original_geracoes_comparar, superMask
 
             if numero_da_geracao < numGeneration:
                 ''' função GA, externa, recebe geracao com fitness, numero da geracao'''
-                geracao_temp = oGA.runGA(geracao_inicial, numero_da_geracao + 1)
+                geracao_temp = oGA.runGA(
+                    geracao_inicial, numero_da_geracao + 1)
             if numero_da_geracao >= numGeneration:
                 geracao_temp = geracao_inicial
 
-            geracao_nova_com_fit = setScoreGen(forest, geracao_temp, metrica, fileCache, Vetores_Vali, numTrees, sizeGen, nFeatures)  ## Geração com Fitness
+            geracao_nova_com_fit = setScoreGen(
+                forest, geracao_temp, metrica, fileCache, Vetores_Vali, numTrees, sizeGen, nFeatures)  # Geração com Fitness
             geracao_temp = []
 
             ''' Agrupamento de Geracao com ou sem Elistia'''
             populacao = []
             if oGA.elitist == 1:
-                populacao = oGA.elitistGroup(geracao_inicial, geracao_nova_com_fit)
+                populacao = oGA.elitistGroup(
+                    geracao_inicial, geracao_nova_com_fit)
             else:
                 populacao = geracao_nova_com_fit
 
@@ -182,13 +185,14 @@ def main(colecao, fold, metrica, numTrees, original_geracoes_comparar, superMask
 
             time_fim_geracao = time.time()
 
-            imprimir_individuo(colecao + '/' + metrica, populacao, numTrees, numero_da_geracao, fold, [oGA.boolSelectTourRoul, oGA.boolCrossUniPoint, oGA.elitist], time_fim_geracao - time_geracao)
+            imprimir_individuo(colecao + '/' + metrica, populacao, numTrees, numero_da_geracao, fold, [
+                               oGA.boolSelectTourRoul, oGA.boolCrossUniPoint, oGA.elitist], time_fim_geracao - time_geracao)
             bag.appendBag(populacao)
 
         The_Best = bag.getBag(1)
 
-
-        scoresBaseTest = forest.predict(Vetores_Test.x, [1] * numTrees, fileCache)
+        scoresBaseTest = forest.predict(
+            Vetores_Test.x, [1] * numTrees, fileCache)
         base_ndgc, _ = modelEvaluation(Vetores_Test, scoresBaseTest, nFeatures)
 
         time_thebest = time.time()
@@ -203,7 +207,8 @@ def main(colecao, fold, metrica, numTrees, original_geracoes_comparar, superMask
         time_final_thebest = time.time()
 
         imprimir_individuo(colecao + '/' + metrica, [The_Best], numTrees, numGeneration, fold,
-                           [oGA.boolSelectTourRoul, oGA.boolCrossUniPoint, oGA.elitist],
+                           [oGA.boolSelectTourRoul,
+                               oGA.boolCrossUniPoint, oGA.elitist],
                            time_final_thebest - time_thebest)
 
     elif original_geracoes_comparar == 1:
@@ -221,7 +226,8 @@ def main(colecao, fold, metrica, numTrees, original_geracoes_comparar, superMask
         time_final_original = time.time()
 
         imprimir_individuo(colecao + '/' + metrica, [origin], numTrees, 1, fold,
-                           [oGA.boolSelectTourRoul, oGA.boolCrossUniPoint, oGA.elitist],
+                           [oGA.boolSelectTourRoul,
+                               oGA.boolCrossUniPoint, oGA.elitist],
                            time_final_original - time_original)
 
     else:
@@ -239,10 +245,12 @@ def main(colecao, fold, metrica, numTrees, original_geracoes_comparar, superMask
         time_final_original = time.time()
 
         imprimir_individuo(colecao + '/' + metrica, [origin], numTrees, 1, fold,
-                           [oGA.boolSelectTourRoul, oGA.boolCrossUniPoint, oGA.elitist],
+                           [oGA.boolSelectTourRoul,
+                               oGA.boolCrossUniPoint, oGA.elitist],
                            time_final_original - time_original)
 
     return 1
+
 
 '''
 colecao =   web10k
@@ -256,10 +264,12 @@ numTrees = 300, 500, 750
 
 '''
 
-for metrica in ["ndcg","trisk", "spea2"]:##, "trisk","ndcg"]:
-    for numTrees in [100,300, 500,750]:##,500,750,1000]:
+for metrica in ["ndcg", "trisk", "spea2"]:  # , "trisk","ndcg"]:
+    for numTrees in [100, 300, 500, 750]:  # ,500,750,1000]:
         for fold in range(1, 6):
-            for geracoes in [1,30]:
-                main("../Colecoes/2003_td_dataset", fold, metrica, numTrees, geracoes)
-                geradorRelatorioValidacao("2003_td_dataset/" + metrica, numTrees, fold)
+            for geracoes in [1, 30]:
+                main("/mnt/c/Users/jefma/Documents/GitHub/PIBIC/Gabriel/TCC_1/2003_td_dataset",
+                     fold, metrica, numTrees, geracoes)
+                geradorRelatorioValidacao(
+                    "2003_td_dataset/" + metrica, numTrees, fold)
         geradorRelatorioFinal("2003_td_dataset/" + metrica, numTrees)
