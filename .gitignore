@@ -103,6 +103,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+pibicvenv/
 
 # Spyder project settings
 .spyderproject
