@@ -103,7 +103,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-pibicvenv/
+pibicenv/
 
 # Spyder project settings
 .spyderproject
@@ -122,3 +122,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Colecoes
+Colecoes/
+finalResults/
+.vscode/
