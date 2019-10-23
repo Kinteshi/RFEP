@@ -26,7 +26,12 @@ def load_L2R_file(TRAIN_FILE_NAME, MASK, sparse=False):
         nLines = nLines + 1
     trainFile.seek(0)
 
-    nFeatures = 64
+    if '2003_td_dataset' in TRAIN_FILE_NAME:
+        nFeatures = 64
+    elif 'web10k' in TRAIN_FILE_NAME:
+        nFeatures = 136
+    elif 'yahoo' in TRAIN_FILE_NAME:
+        nFeatures = 700
 
     #### FILLING IN THE ARRAY
     x_train = np.zeros((nLines, nFeatures))

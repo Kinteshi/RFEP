@@ -14,7 +14,7 @@ from ScikitLearnModificado.forest import Forest
 import controlTime as ct
 import matplotlib.pyplot as plt
 import readSintetic
-os.chdir(os.path.join(os.getcwd(), 'Jeferson'))
+#os.chdir(os.path.join(os.getcwd(), 'Jeferson'))
 
 NUM_INDIVIDUOS = 25
 NUM_GENERATIONS = 25

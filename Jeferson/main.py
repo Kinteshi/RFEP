@@ -1,4 +1,6 @@
 from deapForL2r import main
 
-
-main('2003_td_dataset', '1', 'spea2', ['precision', 'risk'], 70, 25, 5)
+for fold in range(1, 6):
+    for params in [['precision'], ['risk'], ['precision, risk']]:
+        main(DATASET='web10k', FOLD=str(fold), METHOD='spea2', PARAMS=params,
+             NUM_GENES=10000, NUM_INDIVIDUOS=100, NUM_GENERATIONS=50)
