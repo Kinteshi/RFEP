@@ -12,7 +12,7 @@ import datetime as dt
 # import cudf
 from ScikitLearnModificado.forest import Forest
 import controlTime as ct
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import readSintetic
 #os.chdir(os.path.join(os.getcwd(), 'Jeferson'))
 
