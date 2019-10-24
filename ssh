@@ -7,3 +7,8 @@
     HostName virgin.lbd.dcc.ufmg.br
     User daniel
     ProxyCommand C:\Windows\System32\OpenSSH\ssh.exe -q -W %h:22 hidra
+
+  Host muck
+    HostName 150.164.2.57
+    User daniel
+    ProxyCommand C:\Windows\System32\OpenSSH\ssh.exe -q -W %h:22 hidra
