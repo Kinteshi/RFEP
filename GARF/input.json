@@ -1,0 +1,27 @@
+{
+    "generalOptions": {
+        "seed": 1313,
+        "persistForest": false
+    },
+    "geneticAlgorithmOptions": {
+        "crossoverProbability": 0.9,
+        "chromossomeMutationProbability": 0.3,
+        "geneMutationProbabilty": 0.2,
+        "fitnessMetrics": ["NDCG", "GEORisk", "OOBScore"]
+    },
+    "evolutionOptions": {
+        "generationNumber": 50
+    },
+    "datasetOptions": {
+        "datasetName": "web10k",
+        "folds": [1, 2, 3, 4, 5]
+    },
+    "randomForestOptions": {
+        "numerOfTrees": 5000
+    },
+    "outputOptions": {
+        "experimentName": "Modified mutation parameters",
+        "generateArchivePlot": false,
+        "generateGenerationsPlot": false
+    }
+}

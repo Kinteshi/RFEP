@@ -9,25 +9,14 @@ import json
 import time
 import numpy as np
 import datetime as dt
-# import cudf
 from ScikitLearnModificado.forest import Forest
 import controlTime as ct
-#import matplotlib.pyplot as plt
 import readSintetic
-#os.chdir(os.path.join(os.getcwd(), 'Jeferson'))
 
-NUM_INDIVIDUOS = 25
-NUM_GENERATIONS = 25
-NUM_GENES = 50
-PARAMS = ['precision', 'risk']
-METHOD = 'spea2'
-DATASET = '2003_td_dataset'
-NUM_FOLD = '1'
+
 SINTETIC = False
 sparse = False
-
 SEED = 1313
-
 SUB_CROSS = 3
 METRIC = 'NDCG'
 ENSEMBLE = 1  # for regression forest
@@ -87,6 +76,8 @@ def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENER
         metrics_string += p
 
     identifier_string = '1'
+
+    archive_record = {}
 
     readResultTimer.start()
     NOME_COLECAO_BASE = './new_resultados/' + DATASET + \
@@ -155,7 +146,7 @@ def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENER
                     COLECAO_BASE[individuo_ga]['geracao_n'] = current_generation_n
                 elif METHOD == 'spea2':
                     COLECAO_BASE[individuo_ga]['geracao_s'] = current_generation_s
-
+                    
         else:
             result = evaluateIndividuoSerial.getEval(individuo_ga, model, NUM_GENES, X_vali, y_vali,
                                                      query_id_vali,
@@ -208,15 +199,16 @@ def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENER
         Exception()
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)
-    # stats.register("avg", numpy.mean, axis=0)
+    #stats.register("avg", numpy.mean, axis=0)
     stats.register("min", np.min, axis=0)
     stats.register("max", np.max, axis=0)
     stats.register("mean", np.mean, axis=0)
-    # stats.register("std", np.std, axis=0)
+    stats.register("std", np.std, axis=0)
+    stats.register("var", np.var, axis=0)
 
     logbook = tools.Logbook()
     # logbook.header = "gen", "evals", "std", "min", "avg", "max"
-    logbook.header = "gen", "min", "max", "mean",
+    logbook.header = "gen", "min", "max", "mean", "std"
 
     toolboxTimer.stop()
 
@@ -301,6 +293,7 @@ def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENER
             current_generation_n += 1
         elif METHOD == 'spea2':
             record = stats.compile(archive)
+            archive_record[f'{current_generation_s}'] = archive
             current_generation_s += 1
         logbook.record(gen=gen, **record)
 
@@ -323,10 +316,12 @@ def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENER
         log_json[i]['min'] = logbook[i]['min'].tolist()
         log_json[i]['max'] = logbook[i]['max'].tolist()
         log_json[i]['mean'] = logbook[i]['mean'].tolist()
+        log_json[i]['std'] = logbook[i]['std'].tolist()
+        log_json[i]['var'] = logbook[i]['var'].tolist()
     str_params = ''
     for param in PARAMS:
         str_params += param
-    with open("./logs/result"+METHOD+"fold"+NUM_FOLD+str_params+ identifier_string +".json", 'w') as fp:
+    with open("./logs/result"+DATASET+METHOD+"fold"+NUM_FOLD+str_params+ identifier_string +".json", 'w') as fp:
         json.dump(log_json, fp)
 
     persistFinalResultTimer.start()
@@ -368,6 +363,9 @@ def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENER
 
     with open(NOME_COLECAO_BASE.replace('.json', '') + 'topind.json', 'w') as fp:
         json.dump(top, fp)
+
+    with open(NOME_COLECAO_BASE.replace('.json', '') + 'archives.json', 'w') as fp:
+        json.dump(archive_record, fp)
 
     if METHOD == 'nsga2':
         return population

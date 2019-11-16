@@ -1,6 +1,12 @@
 from deapForL2r import main
+from pstats import SortKey
 
-for fold in range(1, 6):
-    for params in [['precision'], ['risk'], ['precision, risk']]:
-        main(DATASET='web10k', NUM_FOLD=str(fold), METHOD='spea2', PARAMS=params,
-             NUM_GENES=10000, NUM_INDIVIDUOS=100, NUM_GENERATIONS=50)
+
+def run():
+    for fold in range(1, 2):
+        for params in [['precision']]:
+            main(DATASET='2003_td_dataset', NUM_FOLD=str(fold), METHOD='spea2', PARAMS=params,
+                 NUM_GENES=100, NUM_INDIVIDUOS=25, NUM_GENERATIONS=50)
+
+
+run()

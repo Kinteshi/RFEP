@@ -130,3 +130,9 @@ finalResults/
 
 # My workspace
 Jeferson/dataset
+Jeferson/new_resultados
+*.png
+.idea/
+.vscode/
+*.profile
+logs/
