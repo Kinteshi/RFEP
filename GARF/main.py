@@ -1,5 +1,4 @@
 from deapForL2r import main
-from pstats import SortKey
 
 import sys
 import os
