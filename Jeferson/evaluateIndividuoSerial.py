@@ -21,13 +21,13 @@ def getEval(individuo, model, NUM_GENES, X_test, y_test, query_id_train, ENSEMBL
 
 def getWeights(params):
     weights = []
-    if 'precision' in params:
+    if 'NDCG' in params:
         weights.append(1)
-    if 'risk' in params:
+    if 'GeoRisk' in params:
         weights.append(1)
     if 'feature' in params:
         weights.append(-1)
-    if 'trisk' in params:
+    if 'TRisk' in params:
         weights.append(-1)
 
     return weights

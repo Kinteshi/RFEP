@@ -3,8 +3,8 @@ import random
 from copy import deepcopy
 import os
 from deap import creator, base, tools, algorithms
-import evaluateIndividuoSerial
-import l2rCodesSerial
+from evaluateIndividuoSerial import getEval, getWeights
+from l2rCodesSerial import load_L2R_file
 import json
 import time
 import numpy as np
@@ -12,18 +12,17 @@ import datetime as dt
 from ScikitLearnModificado.forest import Forest
 import controlTime as ct
 import readSintetic
-
+import pickle
+from GAUtils import oob_synthetic
 
 SINTETIC = False
 sparse = False
-SEED = 1313
-SUB_CROSS = 3
-METRIC = 'NDCG'
-ENSEMBLE = 1  # for regression forest
-ALGORITHM = 'reg'  # for baseline
+seed = 1313
+ensemble = 1  # for regression forest
+baseline_algorithm = 'reg'  # for baseline
+METHOD = 'spea2'
 
-
-random.seed(SEED)
+random.seed(seed)
 
 readFilesTimer = ct.Timer(nome='Tempo Leitura Dataset')
 convertToDataFrameTimer = ct.Timer(nome='Tempo Conversão Array to CUDF')
@@ -44,61 +43,80 @@ persistFinalResultTimer = ct.Timer(
     nome='Tempo Para Persistir Dados no Final da Execução')
 
 
-def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENERATIONS):
-    NTREES = NUM_GENES
-    readFilesTimer.start()
-    X_train, y_train, query_id_train = l2rCodesSerial.load_L2R_file(
-        './dataset/' + DATASET + '/Fold' + NUM_FOLD + '/Norm.' + 'train' + '.txt', '1' * NUM_GENES, sparse)
-    X_test, y_test, query_id_test = l2rCodesSerial.load_L2R_file(
-        './dataset/' + DATASET + '/Fold' + NUM_FOLD + '/Norm.' + 'test' + '.txt', '1' * NUM_GENES, sparse)
-    X_vali, y_vali, query_id_vali = l2rCodesSerial.load_L2R_file(
-        './dataset/' + DATASET + '/Fold' + NUM_FOLD + '/Norm.' + 'vali' + '.txt', '1' * NUM_GENES, sparse)
+def main(input_options):
 
-    # Read Validation
+    # Load dataset files
+    seed = input_options['generalOptions']['seed']
+
+    dataset = input_options['datasetOptions']['datasetName']
+    fold = str(input_options['datasetOptions']['fold'])
+
+    n_trees = input_options['randomForestOptions']['numberOfTrees']
+
+    fitness_metrics = input_options['geneticAlgorithmOptions']['fitnessMetrics']
+    population_size = input_options['geneticAlgorithmOptions']['populationNumber']
+    number_of_generations = input_options['geneticAlgorithmOptions']['generationNumber']
+    crossover_prob = input_options['geneticAlgorithmOptions']['crossoverProbability']
+    chromosome_mutation_prob = input_options['geneticAlgorithmOptions']['chromossomeMutationProbability']
+    gene_mutation_prob = input_options['geneticAlgorithmOptions']['geneMutationProbability']
+    tournament_size = input_options['geneticAlgorithmOptions']['tournamentSize']
+
+    output_folder = input_options['outputOptions']['shortExperimentIdentifier']
+
+    readFilesTimer.start()
+    X_train, y_train, query_id_train = load_L2R_file(
+        './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'train' + '.txt', sparse)
+    X_test, y_test, query_id_test = load_L2R_file(
+        './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'test' + '.txt', sparse)
+    X_vali, y_vali, query_id_vali = load_L2R_file(
+        './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'vali' + '.txt', sparse)
+
+
     readFilesTimer.stop()
 
-    # Intanstiate and fit model
-    model = Forest(n_estimators=NTREES, max_features=0.3, max_leaf_nodes=100, min_samples_leaf=1,
-                   random_state=SEED, n_jobs=-1)
+    forest_path = os.getcwd() + '\\output\\forests\\'
+    if not os.path.exists(forest_path + f'{dataset}{seed}\\'):
+        os.mkdir(forest_path + f'{dataset}{seed}\\')
 
-    model.fit(X_train, y_train)
+    forest_path += f'{dataset}{seed}\\'
+
+    if not os.path.exists(forest_path + f'Fold{fold}.pkl') or not input_options['generalOptions']['persistForest']:
+        model = Forest(n_estimators=n_trees, max_features=0.3, max_leaf_nodes=100, min_samples_leaf=1,
+                       random_state=seed, n_jobs=-1)
+        model.fit(X_train, y_train)
+
+        if input_options['generalOptions']['persistForest']:
+            with open(forest_path + f'Fold{fold}.pkl', 'wb') as forest:
+                pickle.dump(model, forest)
+                forest.close()
+    else:
+        with open(forest_path + f'Fold{fold}.pkl', 'rb') as forest:
+            model = pickle.load(forest)
+            forest.close()
 
     model.estimators_ = np.array(model.estimators_)
 
-    # convertToDataFrameTimer.start()
-    # X_train = cudf.DataFrame.from_records(X_train)
-    # X_test = cudf.DataFrame.from_records(X_test)
-    # y_train = cudf.Series(y_train)
-    # convertToDataFrameTimer.stop()
-
-    metrics_string = ''
-    for p in PARAMS:
-        metrics_string += p
-
-    identifier_string = '1'
-
-    archive_record = {}
+    oob_synthetic(X_train, y_train, model)
 
     readResultTimer.start()
-    NOME_COLECAO_BASE = './new_resultados/' + DATASET + \
-        '-Fold' + NUM_FOLD + '-base-testing' + METHOD + metrics_string + identifier_string + '.json'
-    COLECAO_BASE = {}
+    base_collection_name = f'.\\output\\{output_folder}\\Fold{fold}\\chromossomeCollection'
+    base_collection = {}
 
     try:
-        with open(NOME_COLECAO_BASE, 'r') as fp:
-            COLECAO_BASE = json.load(fp)
+        with open(base_collection_name + '.json', 'r') as fp:
+            base_collection = json.load(fp)
 
-        for item in COLECAO_BASE:
-            for att in COLECAO_BASE[item]:
+        for item in base_collection:
+            for att in base_collection[item]:
                 try:
-                    if len(COLECAO_BASE[item][att]) > 1:
-                        COLECAO_BASE[item][att] = np.array(
-                            COLECAO_BASE[item][att])
+                    if len(base_collection[item][att]) > 1:
+                        base_collection[item][att] = np.array(
+                            base_collection[item][att])
                 except:
                     pass
 
         printsTimer.start()
-        print('A base tem ' + str(len(COLECAO_BASE)) + ' indivíduos!\n')
+        print('A base tem ' + str(len(base_collection)) + ' indivíduos!\n')
         printsTimer.stop()
     except:
         printsTimer.start()
@@ -109,67 +127,68 @@ def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENER
 
     current_generation_s = 1
     current_generation_n = 1
+    archive_record = {}
 
     def evalIndividuo(individual):
         avaliarTimer.start()
         evaluation = []
         individuo_ga = ''
-        for i in range(NUM_GENES):
+        for i in range(n_trees):
             individuo_ga += str(individual[i])
         if '1' not in individuo_ga:
-            if 'precision' in PARAMS:
+            if 'NDCG' in fitness_metrics:
                 evaluation.append(0)
-            if 'risk' in PARAMS:
+            if 'GeoRisk' in fitness_metrics:
                 evaluation.append(0)
-            if 'feature' in PARAMS:
-                evaluation.append(NUM_GENES)
-            if 'trisk' in PARAMS:
+            if 'feature' in fitness_metrics:
+                evaluation.append(n_trees)
+            if 'TRisk' in fitness_metrics:
                 evaluation.append(0)
-        elif individuo_ga in COLECAO_BASE:
-            if 'precision' in PARAMS:
-                evaluation.append(COLECAO_BASE[individuo_ga]['precision'])
-            if 'risk' in PARAMS:
-                evaluation.append(COLECAO_BASE[individuo_ga]['risk'])
-            if 'feature' in PARAMS:
-                evaluation.append(COLECAO_BASE[individuo_ga]['feature'])
-            if 'trisk' in PARAMS:
-                evaluation.append(COLECAO_BASE[individuo_ga]['trisk'])
+        elif individuo_ga in base_collection:
+            if 'NDCG' in fitness_metrics:
+                evaluation.append(base_collection[individuo_ga]['NDCG'])
+            if 'GeoRisk' in fitness_metrics:
+                evaluation.append(base_collection[individuo_ga]['GeoRisk'])
+            if 'feature' in fitness_metrics:
+                evaluation.append(base_collection[individuo_ga]['feature'])
+            if 'TRisk' in fitness_metrics:
+                evaluation.append(base_collection[individuo_ga]['TRisk'])
 
             flag = False
-            if METHOD == "nsga2" and COLECAO_BASE[individuo_ga]['method'] == 2:
+            if METHOD == "nsga2" and base_collection[individuo_ga]['method'] == 2:
                 flag = True
-            if METHOD == "spea2" and COLECAO_BASE[individuo_ga]['method'] == 1:
+            if METHOD == "spea2" and base_collection[individuo_ga]['method'] == 1:
                 flag = True
             if flag:
-                COLECAO_BASE[individuo_ga]['method'] = 3
+                base_collection[individuo_ga]['method'] = 3
                 if METHOD == 'nsga2':
-                    COLECAO_BASE[individuo_ga]['geracao_n'] = current_generation_n
+                    base_collection[individuo_ga]['geracao_n'] = current_generation_n
                 elif METHOD == 'spea2':
-                    COLECAO_BASE[individuo_ga]['geracao_s'] = current_generation_s
-                    
-        else:
-            result = evaluateIndividuoSerial.getEval(individuo_ga, model, NUM_GENES, X_vali, y_vali,
-                                                     query_id_vali,
-                                                     ENSEMBLE, NTREES, SEED, DATASET, METRIC, NUM_FOLD, ALGORITHM)
-            COLECAO_BASE[individuo_ga] = {}
-            COLECAO_BASE[individuo_ga]['precision'] = result[0]
-            COLECAO_BASE[individuo_ga]['risk'] = result[1]
-            COLECAO_BASE[individuo_ga]['feature'] = result[2]
-            COLECAO_BASE[individuo_ga]['trisk'] = result[3]
-            COLECAO_BASE[individuo_ga]['geracao_s'] = current_generation_s
-            COLECAO_BASE[individuo_ga]['geracao_n'] = current_generation_n
-            if METHOD == 'nsga2':
-                COLECAO_BASE[individuo_ga]['method'] = 1
-            elif METHOD == 'spea2':
-                COLECAO_BASE[individuo_ga]['method'] = 2
+                    base_collection[individuo_ga]['geracao_s'] = current_generation_s
 
-            if 'precision' in PARAMS:
+        else:
+            result = getEval(individuo_ga, model, n_trees, X_vali, y_vali,
+                                                     query_id_vali,
+                                                     ensemble, n_trees, seed, dataset, fitness_metrics, fold, baseline_algorithm)
+            base_collection[individuo_ga] = {}
+            base_collection[individuo_ga]['NDCG'] = result[0]
+            base_collection[individuo_ga]['GeoRisk'] = result[1]
+            base_collection[individuo_ga]['feature'] = result[2]
+            base_collection[individuo_ga]['TRisk'] = result[3]
+            base_collection[individuo_ga]['geracao_s'] = current_generation_s
+            base_collection[individuo_ga]['geracao_n'] = current_generation_n
+            if METHOD == 'nsga2':
+                base_collection[individuo_ga]['method'] = 1
+            elif METHOD == 'spea2':
+                base_collection[individuo_ga]['method'] = 2
+
+            if 'NDCG' in fitness_metrics:
                 evaluation.append(result[0])
-            if 'risk' in PARAMS:
+            if 'GeoRisk' in fitness_metrics:
                 evaluation.append(result[1])
-            if 'feature' in PARAMS:
+            if 'feature' in fitness_metrics:
                 evaluation.append(result[2])
-            if 'trisk' in PARAMS:
+            if 'TRisk' in fitness_metrics:
                 evaluation.append(result[3])
 
         avaliarTimer.stop()
@@ -177,20 +196,21 @@ def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENER
 
     toolboxTimer.start()
     creator.create("MyFitness", base.Fitness,
-                   weights=evaluateIndividuoSerial.getWeights(PARAMS))
+                   weights=getWeights(fitness_metrics))
     creator.create("Individual", list, fitness=creator.MyFitness)
 
     toolbox = base.Toolbox()
 
     toolbox.register("attr_bool", random.randint, 0, 1)
     toolbox.register("individual", tools.initRepeat,
-                     creator.Individual, toolbox.attr_bool, n=NUM_GENES)
+                     creator.Individual, toolbox.attr_bool, n=n_trees)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
     toolbox.register("evaluate", evalIndividuo)
     toolbox.register("mate", tools.cxTwoPoint)
-    toolbox.register("mutate", tools.mutFlipBit, indpb=0.3)
-    toolbox.register("selectTournament", tools.selTournament, tournsize=2)
+    toolbox.register("mutate", tools.mutFlipBit, indpb=gene_mutation_prob)
+    toolbox.register("selectTournament", tools.selTournament,
+                     tournsize=tournament_size)
     if METHOD == 'spea2':
         toolbox.register("select", tools.selSPEA2)
     elif METHOD == 'nsga2':
@@ -199,7 +219,6 @@ def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENER
         Exception()
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)
-    #stats.register("avg", numpy.mean, axis=0)
     stats.register("min", np.min, axis=0)
     stats.register("max", np.max, axis=0)
     stats.register("mean", np.mean, axis=0)
@@ -213,24 +232,24 @@ def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENER
     toolboxTimer.stop()
 
     populacaoInicialTimer.start()
-    population = toolbox.population(n=NUM_INDIVIDUOS)
+    population = toolbox.population(n=population_size)
     if SINTETIC:
-        list_individuos = readSintetic.get(DATASET, NUM_FOLD, NUM_INDIVIDUOS)
-        for indice_individuo in range(NUM_INDIVIDUOS):
+        list_individuos = readSintetic.get(dataset, fold, population_size)
+        for indice_individuo in range(population_size):
             temp_ind = list_individuos[indice_individuo]
-            for indice_gene in range(NUM_GENES):
+            for indice_gene in range(n_trees):
                 population[indice_individuo][indice_gene] = temp_ind[indice_gene]
 
     if METHOD == 'nsga2':
-        population = toolbox.select(population, NUM_INDIVIDUOS)
+        population = toolbox.select(population, population_size)
     archive = []
     populacaoInicialTimer.stop()
 
-    for gen in range(NUM_GENERATIONS):
+    for gen in range(number_of_generations):
         if METHOD == 'nsga2':
             crossMutTimer.start()
             offspring = algorithms.varAnd(
-                population, toolbox, cxpb=0.9, mutpb=0.2)
+                population, toolbox, cxpb=crossover_prob, mutpb=chromosome_mutation_prob)
             crossMutTimer.stop()
 
         if METHOD == 'nsga2':
@@ -253,26 +272,26 @@ def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENER
         if METHOD == 'nsga2':
             methodTimer.start()
             population = toolbox.select(
-                population + offspring, k=NUM_INDIVIDUOS)
+                population + offspring, k=population_size)
             methodTimer.stop()
         elif METHOD == 'spea2':
             methodTimer.start()
-            archive = toolbox.select(population + archive, k=NUM_INDIVIDUOS)
+            archive = toolbox.select(population + archive, k=population_size)
             methodTimer.stop()
 
-            mating_pool = toolbox.selectTournament(archive, k=NUM_INDIVIDUOS)
+            mating_pool = toolbox.selectTournament(archive, k=population_size)
             offspring_pool = map(toolbox.clone, mating_pool)
 
             crossMutTimer.start()
             offspring_pool = algorithms.varAnd(
-                offspring_pool, toolbox, cxpb=0.9, mutpb=0.2)
+                offspring_pool, toolbox, cxpb=crossover_prob, mutpb=chromosome_mutation_prob)
             crossMutTimer.stop()
 
             population = offspring_pool
 
         persistResultTimer.start()
         if gen % 5 == 0:
-            TEMP_COLECAO_BASE = deepcopy(COLECAO_BASE)
+            TEMP_COLECAO_BASE = deepcopy(base_collection)
             for item in TEMP_COLECAO_BASE:
                 for att in TEMP_COLECAO_BASE[item]:
                     try:
@@ -281,7 +300,7 @@ def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENER
                             )
                     except:
                         pass
-            with open(NOME_COLECAO_BASE, 'w+') as fp:
+            with open(base_collection_name + '.json', 'w+') as fp:
                 json.dump(TEMP_COLECAO_BASE, fp)
         persistResultTimer.stop()
 
@@ -319,13 +338,13 @@ def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENER
         log_json[i]['std'] = logbook[i]['std'].tolist()
         log_json[i]['var'] = logbook[i]['var'].tolist()
     str_params = ''
-    for param in PARAMS:
+    for param in fitness_metrics:
         str_params += param
-    with open("./logs/result"+DATASET+METHOD+"fold"+NUM_FOLD+str_params+ identifier_string +".json", 'w') as fp:
+    with open(base_collection_name + '-log.json', 'w') as fp:
         json.dump(log_json, fp)
 
     persistFinalResultTimer.start()
-    TEMP_COLECAO_BASE = COLECAO_BASE.copy()
+    TEMP_COLECAO_BASE = base_collection.copy()
     for item in TEMP_COLECAO_BASE:
         for att in TEMP_COLECAO_BASE[item]:
             try:
@@ -335,7 +354,7 @@ def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENER
             except:
                 pass
 
-    with open(NOME_COLECAO_BASE, 'w') as fp:
+    with open(base_collection_name + '.json', 'w') as fp:
         json.dump(TEMP_COLECAO_BASE, fp)
     persistFinalResultTimer.stop()
 
@@ -348,7 +367,7 @@ def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENER
     # plt.show()
 
     top = {}
-    for j in range(0, len(PARAMS)):
+    for j in range(0, len(fitness_metrics)):
         for i in range(0, len(archive)):
             if i == 0:
                 bigger = archive[i].fitness.values[j]
@@ -359,15 +378,18 @@ def main(DATASET, NUM_FOLD, METHOD, PARAMS, NUM_GENES, NUM_INDIVIDUOS, NUM_GENER
                     bigger_index = i
                 else:
                     pass
-        top[PARAMS[j]] = {'ind': archive[bigger_index], 'score':bigger}
+        top[fitness_metrics[j]] = {
+            'ind': archive[bigger_index], 'score': bigger}
 
-    with open(NOME_COLECAO_BASE.replace('.json', '') + 'topind.json', 'w') as fp:
+    with open(base_collection_name + 'Best.json', 'w') as fp:
         json.dump(top, fp)
 
-    with open(NOME_COLECAO_BASE.replace('.json', '') + 'archives.json', 'w') as fp:
+    with open(base_collection_name + 'Archive.json', 'w') as fp:
         json.dump(archive_record, fp)
-
+        
+    '''
     if METHOD == 'nsga2':
         return population
     elif METHOD == 'spea2':
         return archive
+    '''

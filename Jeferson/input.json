@@ -1,0 +1,59 @@
+[{
+        "generalOptions": {
+            "seed": 1313,
+            "persistForest": true
+        },
+        "geneticAlgorithmOptions": {
+            "crossoverProbability": 0.9,
+            "chromossomeMutationProbability": 0.3,
+            "geneMutationProbability": 0.2,
+            "tournamentSize": 2,
+            "fitnessMetrics": ["NDCG"],
+            "generationNumber": 3,
+            "populationNumber": 10
+        },
+        "datasetOptions": {
+            "datasetName": "2003_td_dataset",
+            "fold": 1
+        },
+        "randomForestOptions": {
+            "numberOfTrees": 10
+        },
+        "outputOptions": {
+            "experimentName": "Test new input mode",
+            "shortExperimentIdentifier": "TNIM",
+            "generateArchivePlot": false,
+            "generateGenerationsPlot": false
+        }
+    },
+    {
+        "generalOptions": {
+            "seed": 1313,
+            "persistForest": true
+        },
+        "geneticAlgorithmOptions": {
+            "crossoverProbability": 0.9,
+            "chromossomeMutationProbability": 0.3,
+            "geneMutationProbability": 0.2,
+            "tournamentSize": 2,
+            "fitnessMetrics": [
+                "NDCG"
+            ],
+            "generationNumber": 3,
+            "populationNumber": 10
+        },
+        "datasetOptions": {
+            "datasetName": "2003_td_dataset",
+            "fold": 2
+        },
+        "randomForestOptions": {
+            "numberOfTrees": 10
+        },
+        "outputOptions": {
+            "experimentName": "Test new input mode",
+            "shortExperimentIdentifier": "TNIM",
+            "generateArchivePlot": false,
+            "generateGenerationsPlot": false
+        }
+    }
+]

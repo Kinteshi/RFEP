@@ -16,7 +16,7 @@ from scipy.stats import norm
 # from cuml import LinearRegression as cuLinearRegression
 from scipy import stats
 
-def load_L2R_file(TRAIN_FILE_NAME, MASK, sparse=False):
+def load_L2R_file(TRAIN_FILE_NAME, sparse=False):
     nLines = 0
     nFeatures = 0
 
@@ -37,7 +37,6 @@ def load_L2R_file(TRAIN_FILE_NAME, MASK, sparse=False):
     x_train = np.zeros((nLines, nFeatures))
     y_train = np.zeros((nLines))
     q_train = np.zeros((nLines))
-    maskList = list(MASK)
     iL = 0
 
     for line in trainFile:

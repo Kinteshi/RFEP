@@ -38,22 +38,11 @@ class Forest(RandomForestRegressor):
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted values.
         """
-        
 
-        temp = np.copy(self.estimators_)
+        #temp = np.copy(self.estimators_)
         mask = [i == '1' for i in mask]
 
-        self.estimators_ = self.estimators_[mask]
-
-        
-        
-        '''
-        temp = self.estimators_
-        self.estimators_ = []
-        for i in range(0, len(mask)):
-            if mask[i] == '1':
-                self.estimators_.append(temp[i])
-        '''
+        #self.estimators_ = self.estimators_[mask]
 
         self.n_outputs_ = 1
 
@@ -70,15 +59,44 @@ class Forest(RandomForestRegressor):
         else:
             y_hat = np.zeros((X.shape[0]), dtype=np.float64)
 
+        def pred(e, gene):
+            if gene:
+                e.predict()
+
+
+
         # Parallel loop
         lock = threading.Lock()
         Parallel(n_jobs=n_jobs, verbose=self.verbose,
                  **_joblib_parallel_args(require="sharedmem"))(
-            delayed(_accumulate_prediction)(e.predict, X, [y_hat], lock)
-            for e in self.estimators_)
+            delayed(_accumulate_prediction_mod)(e.predict, X, gene, [y_hat], lock)
+            for e, gene in zip(self.estimators_, mask))
 
-        y_hat /= len(self.estimators_)
+        n_trees = 0
+        for g in mask:
+            if g:
+                n_trees += 1
 
-        self.estimators_ = temp
+        y_hat /= n_trees
+
+        #self.estimators_ = temp
 
         return y_hat
+
+
+def _accumulate_prediction_mod(predict, X, gene, out, lock):
+    """This is a utility function for joblib's Parallel.
+
+    It can't go locally in ForestClassifier or ForestRegressor, because joblib
+    complains that it cannot pickle it when placed there.
+    """
+    if gene:
+        prediction = predict(X, check_input=False)
+        with lock:
+            if len(out) == 1:
+                out[0] += prediction
+            else:
+                for i in range(len(out)):
+                    out[i] += prediction[i]
+    else:
+        pass

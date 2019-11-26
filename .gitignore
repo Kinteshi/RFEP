@@ -136,3 +136,10 @@ Jeferson/new_resultados
 .vscode/
 *.profile
 logs/
+Jeferson/output/TNIM/Fold1/chromossomeCollection-log.json
+Jeferson/output/TNIM/Fold1/chromossomeCollection.json
+Jeferson/output/TNIM/Fold1/chromossomeCollectionArchive.json
+Jeferson/output/TNIM/Fold1/chromossomeCollectionBest.json
+Jeferson/output/TNIM/Fold1/config.json
+Jeferson/output/TNIM/Fold2/config.json
+Jeferson/output/forests/2003_td_dataset1313/Fold1.pkl
