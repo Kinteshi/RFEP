@@ -1,0 +1,138 @@
+[{
+        "generalOptions": {
+            "seed": 2567,
+            "persistForest": true
+        },
+        "geneticAlgorithmOptions": {
+            "crossoverProbability": 0.9,
+            "chromossomeMutationProbability": 0.3,
+            "geneMutationProbability": 0.2,
+            "tournamentSize": 2,
+            "fitnessMetrics": ["NDCG", "GeoRisk"],
+            "generationNumber": 75,
+            "populationNumber": 75
+        },
+        "datasetOptions": {
+            "datasetName": "web10k",
+            "fold": 1
+        },
+        "randomForestOptions": {
+            "numberOfTrees": 5000
+        },
+        "outputOptions": {
+            "experimentName": "Experiment with NDCG and GeoRisk as objectives",
+            "shortExperimentIdentifier": "NDCG_Geo_exp",
+            "generateArchivePlot": false,
+            "generateGenerationsPlot": false
+        }
+    },
+    {
+        "generalOptions": {
+            "seed": 2567,
+            "persistForest": true
+        },
+        "geneticAlgorithmOptions": {
+            "crossoverProbability": 0.9,
+            "chromossomeMutationProbability": 0.3,
+            "geneMutationProbability": 0.2,
+            "tournamentSize": 2,
+            "fitnessMetrics": ["NDCG", "GeoRisk"],
+            "generationNumber": 75,
+            "populationNumber": 75
+        },
+        "datasetOptions": {
+            "datasetName": "web10k",
+            "fold": 2
+        },
+        "randomForestOptions": {
+            "numberOfTrees": 5000
+        },
+        "outputOptions": {
+            "experimentName": "Experiment with NDCG and GeoRisk as objectives",
+            "shortExperimentIdentifier": "NDCG_Geo_exp",
+            "generateArchivePlot": false,
+            "generateGenerationsPlot": false
+        }
+    }, {
+        "generalOptions": {
+            "seed": 2567,
+            "persistForest": true
+        },
+        "geneticAlgorithmOptions": {
+            "crossoverProbability": 0.9,
+            "chromossomeMutationProbability": 0.3,
+            "geneMutationProbability": 0.2,
+            "tournamentSize": 2,
+            "fitnessMetrics": ["NDCG", "GeoRisk"],
+            "generationNumber": 75,
+            "populationNumber": 75
+        },
+        "datasetOptions": {
+            "datasetName": "web10k",
+            "fold": 3
+        },
+        "randomForestOptions": {
+            "numberOfTrees": 5000
+        },
+        "outputOptions": {
+            "experimentName": "Experiment with NDCG and GeoRisk as objectives",
+            "shortExperimentIdentifier": "NDCG_Geo_exp",
+            "generateArchivePlot": false,
+            "generateGenerationsPlot": false
+        }
+    }, {
+        "generalOptions": {
+            "seed": 2567,
+            "persistForest": true
+        },
+        "geneticAlgorithmOptions": {
+            "crossoverProbability": 0.9,
+            "chromossomeMutationProbability": 0.3,
+            "geneMutationProbability": 0.2,
+            "tournamentSize": 2,
+            "fitnessMetrics": ["NDCG", "GeoRisk"],
+            "generationNumber": 75,
+            "populationNumber": 75
+        },
+        "datasetOptions": {
+            "datasetName": "web10k",
+            "fold": 4
+        },
+        "randomForestOptions": {
+            "numberOfTrees": 5000
+        },
+        "outputOptions": {
+            "experimentName": "Experiment with NDCG and GeoRisk as objectives",
+            "shortExperimentIdentifier": "NDCG_Geo_exp",
+            "generateArchivePlot": false,
+            "generateGenerationsPlot": false
+        }
+    }, {
+        "generalOptions": {
+            "seed": 2567,
+            "persistForest": true
+        },
+        "geneticAlgorithmOptions": {
+            "crossoverProbability": 0.9,
+            "chromossomeMutationProbability": 0.3,
+            "geneMutationProbability": 0.2,
+            "tournamentSize": 2,
+            "fitnessMetrics": ["NDCG", "GeoRisk"],
+            "generationNumber": 75,
+            "populationNumber": 75
+        },
+        "datasetOptions": {
+            "datasetName": "web10k",
+            "fold": 5
+        },
+        "randomForestOptions": {
+            "numberOfTrees": 5000
+        },
+        "outputOptions": {
+            "experimentName": "Experiment with NDCG and GeoRisk as objectives",
+            "shortExperimentIdentifier": "WEB10K_NGeo",
+            "generateArchivePlot": false,
+            "generateGenerationsPlot": false
+        }
+    },
+]
