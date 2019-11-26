@@ -127,6 +127,7 @@ dmypy.json
 Colecoes/
 finalResults/
 .vscode/
+output/
 
 # My workspace
 Jeferson/dataset

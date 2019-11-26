@@ -11,18 +11,18 @@ with open(input_file_path, 'r', encoding='utf-8') as input_file:
     input_file.close()
 
 for input_options in options_dict:
-    output_path = os.getcwd() + '\\output\\'
+    output_path = os.getcwd() + '/output/'
     if not os.path.exists(output_path):
         os.mkdir(output_path)
-        os.mkdir(output_path + 'forests\\')
-    output_path += input_options['outputOptions']['shortExperimentIdentifier'] + '\\'
+        os.mkdir(output_path + 'forests/')
+    output_path += input_options['outputOptions']['shortExperimentIdentifier'] + '/'
     if not os.path.exists(output_path):
         os.mkdir(output_path)
 
     fold = input_options['datasetOptions']['fold']
 
-    if not os.path.exists(output_path + f'Fold{fold}\\'):
-        os.mkdir(output_path + f'Fold{fold}\\')
+    if not os.path.exists(output_path + f'Fold{fold}/'):
+        os.mkdir(output_path + f'Fold{fold}/')
 
     ident = input_options['outputOptions']['shortExperimentIdentifier']
     fold = input_options['datasetOptions']['fold']

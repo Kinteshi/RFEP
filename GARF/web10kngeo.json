@@ -8,7 +8,7 @@
             "chromossomeMutationProbability": 0.3,
             "geneMutationProbability": 0.2,
             "tournamentSize": 2,
-            "fitnessMetrics": ["NDCG", "GeoRisk"],
+            "fitnessMetrics": ["NDCG"],
             "generationNumber": 75,
             "populationNumber": 75
         },
@@ -20,8 +20,8 @@
             "numberOfTrees": 5000
         },
         "outputOptions": {
-            "experimentName": "Experiment with NDCG and GeoRisk as objectives",
-            "shortExperimentIdentifier": "NDCG_Geo_exp",
+            "experimentName": "Experiment with NDCG as objectives",
+            "shortExperimentIdentifier": "NDCG_exp",
             "generateArchivePlot": false,
             "generateGenerationsPlot": false
         }
@@ -36,7 +36,7 @@
             "chromossomeMutationProbability": 0.3,
             "geneMutationProbability": 0.2,
             "tournamentSize": 2,
-            "fitnessMetrics": ["NDCG", "GeoRisk"],
+            "fitnessMetrics": ["NDCG"],
             "generationNumber": 75,
             "populationNumber": 75
         },
@@ -48,8 +48,8 @@
             "numberOfTrees": 5000
         },
         "outputOptions": {
-            "experimentName": "Experiment with NDCG and GeoRisk as objectives",
-            "shortExperimentIdentifier": "NDCG_Geo_exp",
+            "experimentName": "Experiment with NDCG as objectives",
+            "shortExperimentIdentifier": "NDCG_exp",
             "generateArchivePlot": false,
             "generateGenerationsPlot": false
         }
@@ -63,7 +63,7 @@
             "chromossomeMutationProbability": 0.3,
             "geneMutationProbability": 0.2,
             "tournamentSize": 2,
-            "fitnessMetrics": ["NDCG", "GeoRisk"],
+            "fitnessMetrics": ["NDCG"],
             "generationNumber": 75,
             "populationNumber": 75
         },
@@ -75,8 +75,8 @@
             "numberOfTrees": 5000
         },
         "outputOptions": {
-            "experimentName": "Experiment with NDCG and GeoRisk as objectives",
-            "shortExperimentIdentifier": "NDCG_Geo_exp",
+            "experimentName": "Experiment with NDCG as objectives",
+            "shortExperimentIdentifier": "NDCG_exp",
             "generateArchivePlot": false,
             "generateGenerationsPlot": false
         }
@@ -90,7 +90,7 @@
             "chromossomeMutationProbability": 0.3,
             "geneMutationProbability": 0.2,
             "tournamentSize": 2,
-            "fitnessMetrics": ["NDCG", "GeoRisk"],
+            "fitnessMetrics": ["NDCG"],
             "generationNumber": 75,
             "populationNumber": 75
         },
@@ -102,8 +102,8 @@
             "numberOfTrees": 5000
         },
         "outputOptions": {
-            "experimentName": "Experiment with NDCG and GeoRisk as objectives",
-            "shortExperimentIdentifier": "NDCG_Geo_exp",
+            "experimentName": "Experiment with NDCG as objectives",
+            "shortExperimentIdentifier": "NDCG_exp",
             "generateArchivePlot": false,
             "generateGenerationsPlot": false
         }
@@ -117,7 +117,7 @@
             "chromossomeMutationProbability": 0.3,
             "geneMutationProbability": 0.2,
             "tournamentSize": 2,
-            "fitnessMetrics": ["NDCG", "GeoRisk"],
+            "fitnessMetrics": ["NDCG"],
             "generationNumber": 75,
             "populationNumber": 75
         },
@@ -129,10 +129,10 @@
             "numberOfTrees": 5000
         },
         "outputOptions": {
-            "experimentName": "Experiment with NDCG and GeoRisk as objectives",
-            "shortExperimentIdentifier": "WEB10K_NGeo",
+            "experimentName": "Experiment with NDCG as objectives",
+            "shortExperimentIdentifier": "NDCG_exp",
             "generateArchivePlot": false,
             "generateGenerationsPlot": false
         }
-    },
+    }
 ]
