@@ -4,8 +4,8 @@ import sys
 import os
 import json
 
-input_file_path = os.getcwd() + '\\' + sys.argv[1]
-#assert os.path.exists(input_file_path), 'This file doesn\'t exist'
+input_file_path = os.getcwd() + '/' + sys.argv[1]
+assert os.path.exists(input_file_path), 'This file doesn\'t exist'
 with open(input_file_path, 'r', encoding='utf-8') as input_file:
     options_dict = json.load(input_file)
     input_file.close()
