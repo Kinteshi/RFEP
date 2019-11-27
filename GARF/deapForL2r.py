@@ -74,11 +74,11 @@ def main(input_options):
 
     readFilesTimer.stop()
 
-    forest_path = os.getcwd() + '\\output\\forests\\'
-    if not os.path.exists(forest_path + f'{dataset}{seed}\\'):
-        os.mkdir(forest_path + f'{dataset}{seed}\\')
+    forest_path = os.getcwd() + '/output/forests/'
+    if not os.path.exists(forest_path + f'{dataset}{seed}/'):
+        os.mkdir(forest_path + f'{dataset}{seed}/')
 
-    forest_path += f'{dataset}{seed}\\'
+    forest_path += f'{dataset}{seed}/'
 
     if not os.path.exists(forest_path + f'Fold{fold}.pkl') or not input_options['generalOptions']['persistForest']:
         model = Forest(n_estimators=n_trees, max_features=0.3, max_leaf_nodes=100, min_samples_leaf=1,
@@ -99,7 +99,7 @@ def main(input_options):
     oob_synthetic(X_train, y_train, model)
 
     readResultTimer.start()
-    base_collection_name = f'.\\output\\{output_folder}\\Fold{fold}\\chromossomeCollection'
+    base_collection_name = f'./output/{output_folder}/Fold{fold}/chromossomeCollection'
     base_collection = {}
 
     try:
