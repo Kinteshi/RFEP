@@ -57,7 +57,7 @@ def main(input_options):
     population_size = input_options['geneticAlgorithmOptions']['populationNumber']
     number_of_generations = input_options['geneticAlgorithmOptions']['generationNumber']
     crossover_prob = input_options['geneticAlgorithmOptions']['crossoverProbability']
-    chromosome_mutation_prob = input_options['geneticAlgorithmOptions']['chromossomeMutationProbability']
+    chromosome_mutation_prob = input_options['geneticAlgorithmOptions']['chromosomeMutationProbability']
     gene_mutation_prob = input_options['geneticAlgorithmOptions']['geneMutationProbability']
     tournament_size = input_options['geneticAlgorithmOptions']['tournamentSize']
 
@@ -99,7 +99,7 @@ def main(input_options):
     oob_synthetic(X_train, y_train, model)
 
     readResultTimer.start()
-    base_collection_name = f'./output/{output_folder}/Fold{fold}/chromossomeCollection'
+    base_collection_name = f'./output/{output_folder}/Fold{fold}/chromosomeCollection'
     base_collection = {}
 
     try:

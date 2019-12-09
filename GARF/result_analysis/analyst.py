@@ -1,55 +1,78 @@
-#%%
+# %%
 from ScikitLearnModificado import Forest
 from l2rCodesSerial import load_L2R_file
 import numpy as np
 import json
 from evaluateIndividuoSerial import getEval
+import os
+import pickle
 
-#%%
-dataset, fold, gen_n, identifier_string, params, seed, sparse = 'web10k', '1', 25, 'Mod50Mut90Cx', 'precision', 1313, False
 
 
-#%%
-#def main(dataset, fold, gen_n, identifier_string, params, seed, sparse=False):
+# %%
+def generate_report(path, identifier, fold):
+    with open(path + f'{identifier}/Fold{fold}/config.json') as config_file:
+        config = json.load(config_file)
+        config_file.close()
 
-with open(f'new_resultados/modified_params/{dataset}-Fold{fold}-base-testingspea2{params}{identifier_string}topind.json') as file:
-    top = json.load(file)
-    file.close()
+    n_genes = n_trees = config['randomForestOptions']['numberOfTrees']
+    dataset = config['randomForestOptions']['datasetName']
+    sparse = False
+    seed = config['generalOptions']['seed']
 
-best_ind = ''
+    if config['generalOptions']['persistForest']:
+        if not os.path.exists(path + 'forests/' + f'Fold{fold}.pkl') or not config['generalOptions']['persistForest']:
+            X_train, y_train, query_id_train = load_L2R_file(
+                './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'train' + '.txt', '1' * n_genes, sparse)
+            model = Forest(n_estimators=n_trees, max_features=0.3, max_leaf_nodes=100, min_samples_leaf=1,
+                           random_state=seed, n_jobs=-1)
+            model.fit(X_train, y_train)
 
-for g in top['precision']['ind']:
-    best_ind += str(g)
+            if config['generalOptions']['persistForest']:
+                with open(path + 'forests/' + f'Fold{fold}.pkl', 'wb') as forest:
+                    pickle.dump(model, forest)
+                    forest.close()
+        else:
+            with open(path + 'forests/' + f'Fold{fold}.pkl', 'rb') as forest:
+                model = pickle.load(forest)
+                forest.close()
+    else:
+        X_train, y_train, query_id_train = load_L2R_file(
+            './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'train' + '.txt', '1' * n_genes, sparse)
+        model = Forest(n_estimators=n_genes, max_features=0.3, max_leaf_nodes=100, min_samples_leaf=1,
+                       random_state=seed, n_jobs=-1)
+        model.fit(X_train, y_train)
 
-n_genes = len(best_ind)
+    model.estimators_ = np.array(model.estimators_)
 
-original_ind = '1' * n_genes
-#%%
-X_train, y_train, query_id_train = load_L2R_file(
-    './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'train' + '.txt', '1' * n_genes, sparse)
-X_test, y_test, query_id_test = load_L2R_file(
-    './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'test' + '.txt', '1' * n_genes, sparse)
-X_vali, y_vali, query_id_vali = load_L2R_file(
+    X_test, y_test, query_id_test = load_L2R_file(
+        './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'test' + '.txt', '1' * n_genes, sparse)
+    X_vali, y_vali, query_id_vali = load_L2R_file(
         './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'vali' + '.txt', '1' * n_genes, sparse)
 
-model = Forest(n_estimators=n_genes, max_features=0.3, max_leaf_nodes=100, min_samples_leaf=1,
-               random_state=seed, n_jobs=-1)
+    with open(path + f'{identifier}/Fold{fold}/chromosomeCollectionBest.json') as file:
+        best = json.load(file)
+        file.close()
 
-model.fit(X_train, y_train)
+    best_ind = ''
 
-model.estimators_ = np.array(model.estimators_)
+    for g in best['precision']['ind']:
+        best_ind += str(g)
 
-#%%
-original_metrics = getEval(original_ind, model, n_genes, X_vali, y_vali,
-                           query_id_test, 1, n_genes, seed, dataset, 'NDCG', fold, 'reg')
+    original_ind = '1' * n_genes
 
-ga_metrics = getEval(best_ind, model, n_genes, X_vali, y_vali,
-                     query_id_vali, 1, n_genes, seed, dataset, 'NDCG', fold, 'reg')
+    results = {}
 
-#%%
-original_metrics = np.mean(original_metrics[0])
-ga_metrics = np.mean(ga_metrics[0])
+    results['validationSet']['original'] = getEval(original_ind, model, n_genes, X_vali, y_vali,
+                                  query_id_vali, 1, n_genes, seed, dataset, 'NDCG', fold, 'reg')
+    results['testSet']['original'] = getEval(original_ind, model, n_genes, X_test, y_test,
+                            query_id_test, 1, n_genes, seed, dataset, 'NDCG', fold, 'reg')
 
-#%%
-print(f'Original: {original_metrics}')
-print(f'GA: {ga_metrics}')
+    results['testSet']['bestModel'] = getEval(best_ind, model, n_genes, X_test, y_test,
+                      query_id_test, 1, n_genes, seed, dataset, 'NDCG', fold, 'reg')
+    results['validationSet']['bestModel'] = getEval(best_ind, model, n_genes, X_vali, y_vali,
+                            query_id_vali, 1, n_genes, seed, dataset, 'NDCG', fold, 'reg')
+
+    with open(path + f'{identifier}/Fold{fold}/resultReport.json') as result_file:
+        json.dump(results, result_file)
+        result_file.close()
