@@ -1,30 +1,29 @@
 [{
-        "generalOptions": {
-            "seed": 2567,
-            "persistForest": true
-        },
-        "geneticAlgorithmOptions": {
-            "crossoverProbability": 0.9,
-            "chromosomeMutationProbability": 0.5,
-            "geneMutationProbability": 0.5,
-            "tournamentSize": 2,
-            "fitnessMetrics": ["NDCG"],
-            "generationNumber": 5,
-            "populationNumber": 10
-        },
-        "datasetOptions": {
-            "datasetName": "2003_td_dataset",
-            "folds": [1]
-        },
-        "randomForestOptions": {
-            "numberOfTrees": 10
-        },
-        "outputOptions": {
-            "experimentName": "Experiment with NDCG and 0.5 for both mutation parameters",
-            "shortExperimentIdentifier": "NDCG_MutationModified",
-            "generateArchivePlot": false,
-            "generateGenerationsPlot": false,
-            "generateReport": false
-        }
+    "generalOptions": {
+        "seed": 2567,
+        "persistForest": true
+    },
+    "geneticAlgorithmOptions": {
+        "crossoverProbability": 0.9,
+        "chromosomeMutationProbability": 0.5,
+        "geneMutationProbability": 0.5,
+        "tournamentSize": 2,
+        "fitnessMetrics": ["NDCG"],
+        "generationNumber": 25,
+        "populationNumber": 20
+    },
+    "datasetOptions": {
+        "datasetName": "2003_td_dataset",
+        "folds": [1]
+    },
+    "randomForestOptions": {
+        "numberOfTrees": 100
+    },
+    "outputOptions": {
+        "experimentName": "Experiment with NDCG and 0.5 for both mutation parameters",
+        "shortExperimentIdentifier": "NDCG_MutationModified",
+        "generateArchivePlot": false,
+        "generateGenerationsPlot": false,
+        "generateReport": false
     }
-]
+}]
