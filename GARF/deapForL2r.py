@@ -52,6 +52,7 @@ def main(input_options):
     fold = str(input_options['datasetOptions']['fold'])
 
     n_trees = input_options['randomForestOptions']['numberOfTrees']
+    oob_predict = input_options['randomForestOptions']['oobPredict']
 
     fitness_metrics = input_options['geneticAlgorithmOptions']['fitnessMetrics']
     population_size = input_options['geneticAlgorithmOptions']['populationNumber']
@@ -96,7 +97,7 @@ def main(input_options):
 
     model.estimators_ = np.array(model.estimators_)
 
-    oob_synthetic(X_train, y_train, model)
+    #oob_synthetic(X_train, y_train, model)
 
     readResultTimer.start()
     base_collection_name = f'./output/{output_folder}/Fold{fold}/chromosomeCollection'
@@ -167,14 +168,19 @@ def main(input_options):
                     base_collection[individuo_ga]['geracao_s'] = current_generation_s
 
         else:
-            result = getEval(individuo_ga, model, n_trees, X_vali, y_vali,
-                                                     query_id_vali,
-                                                     ensemble, n_trees, seed, dataset, fitness_metrics, fold, baseline_algorithm)
+            if oob_predict:
+                result = getEval(individuo_ga, model, n_trees, X_train, y_train,
+                                                     query_id_train,
+                                                     ensemble, n_trees, seed, dataset, fitness_metrics, fold, baseline_algorithm, oob_predict)
+            else:
+                result = getEval(individuo_ga, model, n_trees, X_vali, y_vali,
+                                                         query_id_vali,
+                                                         ensemble, n_trees, seed, dataset, fitness_metrics, fold, baseline_algorithm, oob_predict)
             base_collection[individuo_ga] = {}
             base_collection[individuo_ga]['NDCG'] = result[0]
             base_collection[individuo_ga]['GeoRisk'] = result[1]
             base_collection[individuo_ga]['feature'] = result[2]
-            base_collection[individuo_ga]['TRisk'] = result[3]
+            #base_collection[individuo_ga]['TRisk'] = result[3]
             base_collection[individuo_ga]['geracao_s'] = current_generation_s
             base_collection[individuo_ga]['geracao_n'] = current_generation_n
             if METHOD == 'nsga2':
@@ -337,9 +343,7 @@ def main(input_options):
         log_json[i]['mean'] = logbook[i]['mean'].tolist()
         log_json[i]['std'] = logbook[i]['std'].tolist()
         log_json[i]['var'] = logbook[i]['var'].tolist()
-    str_params = ''
-    for param in fitness_metrics:
-        str_params += param
+
     with open(base_collection_name + '-log.json', 'w') as fp:
         json.dump(log_json, fp)
 

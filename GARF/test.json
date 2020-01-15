@@ -12,26 +12,22 @@
             "fitnessMetrics": [
                 "NDCG"
             ],
-            "generationNumber": 25,
-            "populationNumber": 20
+            "generationNumber": 10,
+            "populationNumber": 10
         },
         "datasetOptions": {
-            "datasetName": "web10k",
+            "datasetName": "2003_td_dataset",
             "folds": [
-                1,
-                2,
-                3,
-                4,
-                5
+                1
             ]
         },
         "randomForestOptions": {
-            "numberOfTrees": 5000,
-            "oobPredict": true
+            "numberOfTrees": 75,
+            "oobPredict": false
         },
         "outputOptions": {
-            "experimentName": "Experiment with OOB NDCG with original params",
-            "shortExperimentIdentifier": "NDCG_OOB1",
+            "experimentName": "Testing whatever2",
+            "shortExperimentIdentifier": "TW2",
             "generateArchivePlot": false,
             "generateGenerationsPlot": false,
             "generateReport": false

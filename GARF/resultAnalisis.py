@@ -18,9 +18,11 @@ def generate_report(path, identifier, fold):
         config_file.close()
 
     n_genes = n_trees = config['randomForestOptions']['numberOfTrees']
+    oob_predict = False
     dataset = config['datasetOptions']['datasetName']
     sparse = False
     seed = config['generalOptions']['seed']
+
 
     if config['generalOptions']['persistForest']:
         if not os.path.exists(path + 'forests/' + f'Fold{fold}.pkl') or not config['generalOptions']['persistForest']:
@@ -68,13 +70,13 @@ def generate_report(path, identifier, fold):
     results['best'] = {}
 
     original_validation = getEval(original_ind, model, n_genes, X_vali, y_vali,
-                                  query_id_vali, 1, n_genes, seed, dataset, 'NDCG', fold, 'reg')
+                                  query_id_vali, 1, n_genes, seed, dataset, 'NDCG', fold, 'reg', oob_predict)
     original_test = getEval(original_ind, model, n_genes, X_test, y_test,
-                            query_id_test, 1, n_genes, seed, dataset, 'NDCG', fold, 'reg')
+                            query_id_test, 1, n_genes, seed, dataset, 'NDCG', fold, 'reg', oob_predict)
     best_test = getEval(best_ind, model, n_genes, X_test, y_test,
-                        query_id_test, 1, n_genes, seed, dataset, 'NDCG', fold, 'reg')
+                        query_id_test, 1, n_genes, seed, dataset, 'NDCG', fold, 'reg', oob_predict)
     best_validation = getEval(best_ind, model, n_genes, X_vali, y_vali,
-                              query_id_vali, 1, n_genes, seed, dataset, 'NDCG', fold, 'reg')
+                              query_id_vali, 1, n_genes, seed, dataset, 'NDCG', fold, 'reg', oob_predict)
 
     results['original']['validation'] = {}
     results['original']['test'] = {}

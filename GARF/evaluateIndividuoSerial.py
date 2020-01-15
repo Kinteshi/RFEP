@@ -3,18 +3,18 @@ import numpy as np
 from sklearn import model_selection
 
 
-def getEval(individuo, model, NUM_GENES, X_test, y_test, query_id_train, ENSEMBLE, NTREES, SEED,
-            DATASET, METRIC, NUM_FOLD, ALGORITHM):
+def getEval(individuo, model, NUM_GENES, X, y, query_id_train, ENSEMBLE, NTREES, SEED,
+            DATASET, METRIC, NUM_FOLD, ALGORITHM, oob_predict):
     evaluation = []
-    ndcg, queries = getPrecisionAndQueries(individuo, model, NUM_GENES, X_test, y_test, query_id_train,
+    ndcg, queries = getPrecisionAndQueries(individuo, model, NUM_GENES, X, y, query_id_train,
                                            ENSEMBLE, NTREES, SEED, DATASET,
-                                           METRIC)
+                                           METRIC, oob_predict)
 
     evaluation.append(queries)
     # evaluation.append(ndcg)
     evaluation.append(getRisk(queries, DATASET, NUM_FOLD, ALGORITHM))
     evaluation.append(getTotalFeature(individuo))
-    evaluation.append(getTRisk(queries, DATASET, NUM_FOLD, ALGORITHM))
+    #evaluation.append(getTRisk(queries, DATASET, NUM_FOLD, ALGORITHM))
 
     return evaluation
 
@@ -75,15 +75,18 @@ def getTRisk(queries, DATASET, NUM_FOLD, ALGORITHM):
     return vetorRisk
 
 
-def getPrecisionAndQueries(individuo, model, NUM_GENES, X_vali, y_vali, query_id_train, ENSEMBLE, NTREES,
+def getPrecisionAndQueries(individuo, model, NUM_GENES, X, y, query_id, ENSEMBLE, NTREES,
                            SEED, DATASET,
-                           METRIC):
+                           METRIC, oob_predict):
 
     list_mask = list(individuo)
 
-    queriesList = l2rCodesSerial.getQueries(query_id_train)
-    resScore = model.predict(X_vali, list_mask)
+    #queriesList = l2rCodesSerial.getQueries(query_id_train)
+    if oob_predict:
+        resScore = model.oob_predict(X, y, list_mask)
+    else:
+        resScore = model.predict(X, list_mask)
 
     ndcg, queries = l2rCodesSerial.getEvaluation(
-        resScore, query_id_train, y_vali, DATASET, METRIC, "test")
+        resScore, query_id, y, DATASET, METRIC, "test")
     return ndcg, queries

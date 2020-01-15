@@ -1,4 +1,5 @@
 # coding=utf-8
+import numbers
 import pickle
 import threading
 from warnings import warn
@@ -83,6 +84,43 @@ class Forest(RandomForestRegressor):
 
         return y_hat
 
+    def oob_predict(self, X, y, genes):
+        """
+        Compute out-of-bag prediction."""
+        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+
+        n_samples = y.shape[0]
+
+        predictions = np.zeros((n_samples, self.n_outputs_))
+        n_predictions = np.zeros((n_samples, self.n_outputs_))
+
+        n_samples_bootstrap = _get_n_samples_bootstrap(
+            n_samples, self.max_samples
+        )
+
+        genes = [i == '1' for i in genes]
+
+        for estimator, gene in zip(self.estimators_, genes):
+            if gene:
+                unsampled_indices = _generate_unsampled_indices(
+                    estimator.random_state, n_samples, n_samples_bootstrap)
+                p_estimator = estimator.predict(
+                    X[unsampled_indices, :], check_input=False)
+
+                if self.n_outputs_ == 1:
+                    p_estimator = p_estimator[:, np.newaxis]
+
+                predictions[unsampled_indices, :] += p_estimator
+                n_predictions[unsampled_indices, :] += 1
+
+        if (n_predictions == 0).any():
+            warn("Some inputs do not have OOB scores. "
+                 "This probably means too few trees were used "
+                 "to compute any reliable oob estimates.")
+            n_predictions[n_predictions == 0] = 1
+
+        predictions /= n_predictions
+        return predictions
 
 def _accumulate_prediction_mod(predict, X, gene, out, lock):
     """This is a utility function for joblib's Parallel.
@@ -100,3 +138,62 @@ def _accumulate_prediction_mod(predict, X, gene, out, lock):
                     out[i] += prediction[i]
     else:
         pass
+
+def _get_n_samples_bootstrap(n_samples, max_samples):
+    """
+    Get the number of samples in a bootstrap sample.
+
+    Parameters
+    ----------
+    n_samples : int
+        Number of samples in the dataset.
+    max_samples : int or float
+        The maximum number of samples to draw from the total available:
+            - if float, this indicates a fraction of the total and should be
+              the interval `(0, 1)`;
+            - if int, this indicates the exact number of samples;
+            - if None, this indicates the total number of samples.
+
+    Returns
+    -------
+    n_samples_bootstrap : int
+        The total number of samples to draw for the bootstrap sample.
+    """
+    if max_samples is None:
+        return n_samples
+
+    if isinstance(max_samples, numbers.Integral):
+        if not (1 <= max_samples <= n_samples):
+            msg = "`max_samples` must be in range 1 to {} but got value {}"
+            raise ValueError(msg.format(n_samples, max_samples))
+        return max_samples
+
+    if isinstance(max_samples, numbers.Real):
+        if not (0 < max_samples < 1):
+            msg = "`max_samples` must be in range (0, 1) but got value {}"
+            raise ValueError(msg.format(max_samples))
+        return int(round(n_samples * max_samples))
+
+    msg = "`max_samples` should be int or float, but got type '{}'"
+    raise TypeError(msg.format(type(max_samples)))
+
+def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
+    """
+    Private function used to _parallel_build_trees function."""
+
+    random_instance = check_random_state(random_state)
+    sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
+
+    return sample_indices
+
+def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
+    """
+    Private function used to forest._set_oob_score function."""
+    sample_indices = _generate_sample_indices(random_state, n_samples,
+                                              n_samples_bootstrap)
+    sample_counts = np.bincount(sample_indices, minlength=n_samples)
+    unsampled_mask = sample_counts == 0
+    indices_range = np.arange(n_samples)
+    unsampled_indices = indices_range[unsampled_mask]
+
+    return unsampled_indices
