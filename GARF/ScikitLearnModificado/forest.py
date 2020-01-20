@@ -40,10 +40,10 @@ class Forest(RandomForestRegressor):
             The predicted values.
         """
 
-        #temp = np.copy(self.estimators_)
+        # temp = np.copy(self.estimators_)
         mask = [i == '1' for i in mask]
 
-        #self.estimators_ = self.estimators_[mask]
+        # self.estimators_ = self.estimators_[mask]
 
         self.n_outputs_ = 1
 
@@ -60,17 +60,12 @@ class Forest(RandomForestRegressor):
         else:
             y_hat = np.zeros((X.shape[0]), dtype=np.float64)
 
-        def pred(e, gene):
-            if gene:
-                e.predict()
-
-
-
         # Parallel loop
         lock = threading.Lock()
         Parallel(n_jobs=n_jobs, verbose=self.verbose,
                  **_joblib_parallel_args(require="sharedmem"))(
-            delayed(_accumulate_prediction_mod)(e.predict, X, gene, [y_hat], lock)
+            delayed(_accumulate_prediction_mod)(
+                e.predict, X, gene, [y_hat], lock)
             for e, gene in zip(self.estimators_, mask))
 
         n_trees = 0
@@ -80,7 +75,7 @@ class Forest(RandomForestRegressor):
 
         y_hat /= n_trees
 
-        #self.estimators_ = temp
+        # self.estimators_ = temp
 
         return y_hat
 
@@ -100,18 +95,16 @@ class Forest(RandomForestRegressor):
 
         genes = [i == '1' for i in genes]
 
-        for estimator, gene in zip(self.estimators_, genes):
-            if gene:
-                unsampled_indices = _generate_unsampled_indices(
-                    estimator.random_state, n_samples, n_samples_bootstrap)
-                p_estimator = estimator.predict(
-                    X[unsampled_indices, :], check_input=False)
+        # Assign chunk of trees to jobs
+        n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
-                if self.n_outputs_ == 1:
-                    p_estimator = p_estimator[:, np.newaxis]
-
-                predictions[unsampled_indices, :] += p_estimator
-                n_predictions[unsampled_indices, :] += 1
+        # Parallel loop
+        lock = threading.Lock()
+        Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                 **_joblib_parallel_args(require="sharedmem"))(
+            delayed(_oob_accumulate_prediction)(
+                e.predict, X, gene, [predictions, n_predictions], lock, n_samples, n_samples_bootstrap, self.n_outputs_, e.random_state)
+            for e, gene in zip(self.estimators_, genes))
 
         if (n_predictions == 0).any():
             warn("Some inputs do not have OOB scores. "
@@ -121,6 +114,25 @@ class Forest(RandomForestRegressor):
 
         predictions /= n_predictions
         return predictions
+
+
+def _oob_accumulate_prediction(predict, X, gene, out, lock, n_samples, n_samples_bootstrap, n_outputs_, random_state):
+
+    if gene:
+        unsampled_indices = _generate_unsampled_indices(
+            random_state, n_samples, n_samples_bootstrap)
+        p_estimator = predict(
+            X[unsampled_indices, :], check_input=False)
+
+        if n_outputs_ == 1:
+            p_estimator = p_estimator[:, np.newaxis]
+
+        with lock:
+            out[0][unsampled_indices, :] += p_estimator
+            out[1][unsampled_indices, :] += 1
+    else:
+        pass
+
 
 def _accumulate_prediction_mod(predict, X, gene, out, lock):
     """This is a utility function for joblib's Parallel.
@@ -138,6 +150,7 @@ def _accumulate_prediction_mod(predict, X, gene, out, lock):
                     out[i] += prediction[i]
     else:
         pass
+
 
 def _get_n_samples_bootstrap(n_samples, max_samples):
     """
@@ -177,6 +190,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
     msg = "`max_samples` should be int or float, but got type '{}'"
     raise TypeError(msg.format(type(max_samples)))
 
+
 def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
     """
     Private function used to _parallel_build_trees function."""
@@ -185,6 +199,7 @@ def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
     sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
 
     return sample_indices
+
 
 def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
     """

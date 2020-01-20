@@ -23,7 +23,7 @@
         },
         "randomForestOptions": {
             "numberOfTrees": 75,
-            "oobPredict": false
+            "oobPredict": true
         },
         "outputOptions": {
             "experimentName": "Testing whatever2",

@@ -12,27 +12,27 @@ with open(input_file_path, 'r', encoding='utf-8') as input_file:
     options_dict = json.load(input_file)
     input_file.close()
 
-for input_options in options_dict:
+for experiment_options in options_dict:
     output_path = os.getcwd() + '/output/'
     results_path = output_path
     if not os.path.exists(output_path):
         os.mkdir(output_path)
         os.mkdir(output_path + 'forests/')
-    output_path += input_options['outputOptions']['shortExperimentIdentifier'] + '/'
+    output_path += experiment_options['outputOptions']['shortExperimentIdentifier'] + '/'
     if not os.path.exists(output_path):
         os.mkdir(output_path)
 
-    for fold in input_options['datasetOptions']['folds']:
+    for fold in experiment_options['datasetOptions']['folds']:
         if not os.path.exists(output_path + f'Fold{fold}/'):
             os.mkdir(output_path + f'Fold{fold}/')
 
-        input_options['datasetOptions']['fold'] = fold
-        ident = input_options['outputOptions']['shortExperimentIdentifier']
+        experiment_options['datasetOptions']['fold'] = fold
+        ident = experiment_options['outputOptions']['shortExperimentIdentifier']
         with open(f'./output/{ident}/Fold{fold}/config.json', 'w') as file:
-            json.dump(input_options, file)
+            json.dump(experiment_options, file)
 
-        main(input_options)
+        main(experiment_options)
         generate_report(results_path, ident, fold)
         make_graphics(results_path, ident, fold)
-    shutil.make_archive(results_path + input_options['outputOptions']['shortExperimentIdentifier'], 'zip',
-                        results_path + input_options['outputOptions']['shortExperimentIdentifier'])
+    shutil.make_archive(results_path + experiment_options['outputOptions']['shortExperimentIdentifier'], 'zip',
+                        results_path + experiment_options['outputOptions']['shortExperimentIdentifier'])
