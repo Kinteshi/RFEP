@@ -23,7 +23,6 @@ def generate_report(path, identifier, fold):
     sparse = False
     seed = config['generalOptions']['seed']
 
-
     if config['generalOptions']['persistForest']:
         if not os.path.exists(path + 'forests/' + f'Fold{fold}.pkl') or not config['generalOptions']['persistForest']:
             X_train, y_train, query_id_train = load_L2R_file(
@@ -98,18 +97,18 @@ def generate_report(path, identifier, fold):
     results['overallStats'] = {}
 
     results['overallStats']['validationNDCGGain'] = ((results['best']['validationNDCG'] -
-                                                      results['original']['validationNDCG']) / \
+                                                      results['original']['validationNDCG']) /
                                                      results['original']['validationNDCG']) * 100
 
     results['overallStats']['testNDCGGain'] = ((results['best']['testNDCG'] -
-                                                results['original']['testNDCG']) / \
+                                                results['original']['testNDCG']) /
                                                results['original']['testNDCG']) * 100
 
     results['overallStats']['treesVariation'] = ((results['best']['numberOfTrees'] - results['original'][
         'numberOfTrees']) / results['original']['numberOfTrees']) * 100
 
     with open(path + f'{identifier}/Fold{fold}/resultReport.json', 'w') as result_file:
-        json.dump(results, result_file)
+        json.dump(results, result_file, indent=4)
         result_file.close()
 
 
@@ -185,7 +184,6 @@ def make_graphics(path, identifier, fold):
     sns.set_palette('dark')
     sns.set_context('poster')
 
-
     fig = plt.figure(figsize=(15, 10))
     ax = fig.add_subplot()
 
@@ -235,3 +233,41 @@ def make_graphics(path, identifier, fold):
     ax.legend(legend)
     ax.set_title('NDCG by generation\'s archive')
     plt.savefig(f'{path}{identifier}/Fold{fold}/miscArchive.png')
+
+def plot_pareto_front(path, identifier, fold):
+    with open(f'{path}{identifier}/Fold{fold}/chromosomeCollectionParetoFront.json', 'r') as file:
+        pareto_front = json.load(file)
+        file.close()
+
+    with open(f'{path}{identifier}/Fold{fold}/chromosomeCollection.json', 'r') as base:
+        inds = json.load(base)
+        base.close()
+
+    with open(path + f'{identifier}/Fold{fold}/config.json') as config_file:
+        config = json.load(config_file)
+        config_file.close()
+
+    ndcg = []
+    georisk = []
+
+    for ind, fitness in inds.items():
+        ndcg.append(np.mean(fitness['NDCG']))
+        georisk.append(np.mean(fitness['GeoRisk']))
+
+    frontier_ndcg = []
+    frontier_georisk = []
+
+    for exceptional in pareto_front:
+        frontier_ndcg.append(np.mean(inds[exceptional]['NDCG']))
+        frontier_georisk.append(inds[exceptional]['GeoRisk'])
+
+    fig = plt.figure(figsize=(15, 15))
+    ax = fig.add_subplot()
+
+    ax.scatter(georisk, ndcg, color='g')
+    ax.scatter(frontier_georisk, frontier_ndcg, color='b')
+
+    ax.set_ylabel('NDCG')
+    ax.set_xlabel('GeoRisk')
+    ax.set_title('Chromosome scatter')
+    plt.savefig(f'{path}{identifier}/Fold{fold}/paretoFront.png')

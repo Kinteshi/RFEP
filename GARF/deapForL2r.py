@@ -1,4 +1,4 @@
-# %cd /content/tcc_l2r
+#%%
 import random
 from copy import deepcopy
 import os
@@ -15,6 +15,7 @@ import readSintetic
 import pickle
 from GAUtils import oob_synthetic
 
+#%%
 SINTETIC = False
 sparse = False
 seed = 1313
@@ -22,6 +23,7 @@ ensemble = 1  # for regression forest
 baseline_algorithm = 'reg'  # for baseline
 METHOD = 'spea2'
 
+#%%
 random.seed(seed)
 
 readFilesTimer = ct.Timer(nome='Tempo Leitura Dataset')
@@ -43,6 +45,7 @@ persistFinalResultTimer = ct.Timer(
     nome='Tempo Para Persistir Dados no Final da Execução')
 
 
+#%%
 def main(input_options):
 
     # Load dataset files
@@ -67,8 +70,8 @@ def main(input_options):
     readFilesTimer.start()
     X_train, y_train, query_id_train = load_L2R_file(
         './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'train' + '.txt', sparse)
-    X_test, y_test, query_id_test = load_L2R_file(
-        './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'test' + '.txt', sparse)
+    #X_test, y_test, query_id_test = load_L2R_file(
+    #    './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'test' + '.txt', sparse)
     X_vali, y_vali, query_id_vali = load_L2R_file(
         './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'vali' + '.txt', sparse)
 
@@ -76,10 +79,10 @@ def main(input_options):
     readFilesTimer.stop()
 
     forest_path = os.getcwd() + '/output/forests/'
-    if not os.path.exists(forest_path + f'{dataset}{seed}/'):
-        os.mkdir(forest_path + f'{dataset}{seed}/')
+    if not os.path.exists(forest_path + f'{dataset}{seed}{n_trees}/'):
+        os.mkdir(forest_path + f'{dataset}{seed}{n_trees}/')
 
-    forest_path += f'{dataset}{seed}/'
+    forest_path += f'{dataset}{seed}{n_trees}/'
 
     if not os.path.exists(forest_path + f'Fold{fold}.pkl') or not input_options['generalOptions']['persistForest']:
         model = Forest(n_estimators=n_trees, max_features=0.3, max_leaf_nodes=100, min_samples_leaf=1,
@@ -217,6 +220,9 @@ def main(input_options):
     toolbox.register("mutate", tools.mutFlipBit, indpb=gene_mutation_prob)
     toolbox.register("selectTournament", tools.selTournament,
                      tournsize=tournament_size)
+    paretoFront = tools.ParetoFront()
+    
+
     if METHOD == 'spea2':
         toolbox.register("select", tools.selSPEA2)
     elif METHOD == 'nsga2':
@@ -293,7 +299,12 @@ def main(input_options):
                 offspring_pool, toolbox, cxpb=crossover_prob, mutpb=chromosome_mutation_prob)
             crossMutTimer.stop()
 
+            if len(fitness_metrics) > 1:
+                paretoFront.update(population)
+
             population = offspring_pool
+
+            print(len(paretoFront))
 
         persistResultTimer.start()
         if gen % 5 == 0:
@@ -307,7 +318,7 @@ def main(input_options):
                     except:
                         pass
             with open(base_collection_name + '.json', 'w+') as fp:
-                json.dump(TEMP_COLECAO_BASE, fp)
+                json.dump(TEMP_COLECAO_BASE, fp, indent=4)
         persistResultTimer.stop()
 
         estatisticaGerTimer.start()
@@ -319,6 +330,8 @@ def main(input_options):
         elif METHOD == 'spea2':
             record = stats.compile(archive)
             archive_record[f'{current_generation_s}'] = archive
+            if len(fitness_metrics) > 1:
+                paretoFront.update(archive)
             current_generation_s += 1
         logbook.record(gen=gen, **record)
 
@@ -345,7 +358,7 @@ def main(input_options):
         log_json[i]['var'] = logbook[i]['var'].tolist()
 
     with open(base_collection_name + '-log.json', 'w') as fp:
-        json.dump(log_json, fp)
+        json.dump(log_json, fp, indent=4)
 
     persistFinalResultTimer.start()
     TEMP_COLECAO_BASE = base_collection.copy()
@@ -359,7 +372,7 @@ def main(input_options):
                 pass
 
     with open(base_collection_name + '.json', 'w') as fp:
-        json.dump(TEMP_COLECAO_BASE, fp)
+        json.dump(TEMP_COLECAO_BASE, fp, indent=4)
     persistFinalResultTimer.stop()
 
     # Dá pra fazer a evolução deles com as informações do logboook
@@ -386,11 +399,22 @@ def main(input_options):
             'ind': archive[bigger_index], 'score': bigger}
 
     with open(base_collection_name + 'Best.json', 'w') as fp:
-        json.dump(top, fp)
+        json.dump(top, fp, indent=4)
 
     with open(base_collection_name + 'Archive.json', 'w') as fp:
-        json.dump(archive_record, fp)
-        
+        json.dump(archive_record, fp, indent=4)
+
+    if len(fitness_metrics) > 1:
+        pareto_front_ = []
+        for exceptional in list(paretoFront):
+            exc = ''
+            for gene in exceptional:
+                exc += str(gene)
+            pareto_front_.append(exc)
+        pareto_front_ = pareto_front_
+
+        with open(base_collection_name + 'ParetoFront.json', 'w') as fp:
+            json.dump(pareto_front_, fp, indent=4)
     '''
     if METHOD == 'nsga2':
         return population

@@ -10,7 +10,8 @@
             "geneMutationProbability": 0.5,
             "tournamentSize": 2,
             "fitnessMetrics": [
-                "NDCG"
+                "NDCG",
+                "GeoRisk"
             ],
             "generationNumber": 10,
             "populationNumber": 10
@@ -22,15 +23,15 @@
             ]
         },
         "randomForestOptions": {
-            "numberOfTrees": 75,
-            "oobPredict": true
+            "numberOfTrees": 35,
+            "oobPredict": false
         },
         "outputOptions": {
             "experimentName": "Testing whatever2",
-            "shortExperimentIdentifier": "TW2",
-            "generateArchivePlot": false,
-            "generateGenerationsPlot": false,
-            "generateReport": false
+            "shortExperimentIdentifier": "TW4",
+            "generatePlots": true,
+            "generateReport": true,
+            "zipFiles": false
         }
     }
 ]

@@ -12,7 +12,7 @@ def getEval(individuo, model, NUM_GENES, X, y, query_id_train, ENSEMBLE, NTREES,
 
     evaluation.append(queries)
     # evaluation.append(ndcg)
-    evaluation.append(getRisk(queries, DATASET, NUM_FOLD, ALGORITHM))
+    evaluation.append(np.round(getRisk(queries, DATASET, NUM_FOLD, ALGORITHM), 5))
     evaluation.append(getTotalFeature(individuo))
     #evaluation.append(getTRisk(queries, DATASET, NUM_FOLD, ALGORITHM))
 
