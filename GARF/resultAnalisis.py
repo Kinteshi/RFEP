@@ -23,8 +23,14 @@ def generate_report(path, identifier, fold):
     sparse = False
     seed = config['generalOptions']['seed']
 
+    forest_path = os.getcwd() + '/output/forests/'
+    if not os.path.exists(forest_path + f'{dataset}{seed}{n_trees}/'):
+        os.mkdir(forest_path + f'{dataset}{seed}{n_trees}/')
+
+    forest_path += f'{dataset}{seed}{n_trees}/'
+
     if config['generalOptions']['persistForest']:
-        if not os.path.exists(path + 'forests/' + f'Fold{fold}.pkl') or not config['generalOptions']['persistForest']:
+        if not os.path.exists(forest_path + f'Fold{fold}.pkl') or not config['generalOptions']['persistForest']:
             X_train, y_train, query_id_train = load_L2R_file(
                 f'./dataset/{dataset}/Fold{fold}/Norm.train.txt', sparse)
             model = Forest(n_estimators=n_trees, max_features=0.3, max_leaf_nodes=100, min_samples_leaf=1,
@@ -32,11 +38,11 @@ def generate_report(path, identifier, fold):
             model.fit(X_train, y_train)
 
             if config['generalOptions']['persistForest']:
-                with open(path + 'forests/' + f'Fold{fold}.pkl', 'wb') as forest:
+                with open(forest_path + f'Fold{fold}.pkl', 'wb') as forest:
                     pickle.dump(model, forest)
                     forest.close()
         else:
-            with open(path + 'forests/' + f'Fold{fold}.pkl', 'rb') as forest:
+            with open(forest_path + f'Fold{fold}.pkl', 'rb') as forest:
                 model = pickle.load(forest)
                 forest.close()
     else:
