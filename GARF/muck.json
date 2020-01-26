@@ -3,9 +3,9 @@
         "outputOptions": {
             "experimentName": "Part of a series of experiments, OOB/1000/NDCG",
             "shortExperimentIdentifier": "OOB1000M1",
-            "generateArchivePlot": false,
-            "generateGenerationsPlot": false,
-            "generateReport": false
+            "generatePlots": true,
+            "generateReport": true,
+            "zipFiles": true
         },
         "generalOptions": {
             "seed": 2567,
@@ -41,9 +41,9 @@
         "outputOptions": {
             "experimentName": "Part of a series of experiments, OOB/1000/NDCG-GeoRisk",
             "shortExperimentIdentifier": "OOB1000M2",
-            "generateArchivePlot": false,
-            "generateGenerationsPlot": false,
-            "generateReport": false
+            "generatePlots": true,
+            "generateReport": true,
+            "zipFiles": true
         },
         "generalOptions": {
             "seed": 2567,
@@ -80,9 +80,9 @@
         "outputOptions": {
             "experimentName": "Part of a series of experiments, OOB/5000/NDCG",
             "shortExperimentIdentifier": "OOB5000M1",
-            "generateArchivePlot": false,
-            "generateGenerationsPlot": false,
-            "generateReport": false
+            "generatePlots": true,
+            "generateReport": true,
+            "zipFiles": true
         },
         "generalOptions": {
             "seed": 2567,
@@ -118,9 +118,9 @@
         "outputOptions": {
             "experimentName": "Part of a series of experiments, OOB/5000/NDCG-GeoRisk",
             "shortExperimentIdentifier": "OOB5000M2",
-            "generateArchivePlot": false,
-            "generateGenerationsPlot": false,
-            "generateReport": false
+            "generatePlots": true,
+            "generateReport": true,
+            "zipFiles": true
         },
         "generalOptions": {
             "seed": 2567,

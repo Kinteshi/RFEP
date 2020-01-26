@@ -3,9 +3,9 @@
         "outputOptions": {
             "experimentName": "Part of a series of experiments, CV/700/NDCG",
             "shortExperimentIdentifier": "CV700M1",
-            "generateArchivePlot": false,
-            "generateGenerationsPlot": false,
-            "generateReport": false
+            "generatePlots": true,
+            "generateReport": true,
+            "zipFiles": true
         },
         "generalOptions": {
             "seed": 2567,
@@ -41,9 +41,9 @@
         "outputOptions": {
             "experimentName": "Part of a series of experiments, CV/700/NDCG-GeoRisk",
             "shortExperimentIdentifier": "CV700M2",
-            "generateArchivePlot": false,
-            "generateGenerationsPlot": false,
-            "generateReport": false
+            "generatePlots": true,
+            "generateReport": true,
+            "zipFiles": true
         },
         "generalOptions": {
             "seed": 2567,
@@ -80,9 +80,9 @@
         "outputOptions": {
             "experimentName": "Part of a series of experiments, CV/1000/NDCG",
             "shortExperimentIdentifier": "CV1000M1",
-            "generateArchivePlot": false,
-            "generateGenerationsPlot": false,
-            "generateReport": false
+            "generatePlots": true,
+            "generateReport": true,
+            "zipFiles": true
         },
         "generalOptions": {
             "seed": 2567,
@@ -118,9 +118,9 @@
         "outputOptions": {
             "experimentName": "Part of a series of experiments, CV/1000/NDCG-GeoRisk",
             "shortExperimentIdentifier": "CV1000M2",
-            "generateArchivePlot": false,
-            "generateGenerationsPlot": false,
-            "generateReport": false
+            "generatePlots": true,
+            "generateReport": true,
+            "zipFiles": true
         },
         "generalOptions": {
             "seed": 2567,
