@@ -75,8 +75,6 @@ class Forest(RandomForestRegressor):
 
         y_hat /= n_trees
 
-        # self.estimators_ = temp
-
         return y_hat
 
     def oob_predict(self, X, y, genes):
@@ -90,7 +88,7 @@ class Forest(RandomForestRegressor):
         n_predictions = np.zeros((n_samples, self.n_outputs_))
 
         n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples, self.max_samples
+            n_samples, None
         )
 
         genes = [i == '1' for i in genes]
