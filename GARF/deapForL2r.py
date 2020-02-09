@@ -1,4 +1,4 @@
-#%%
+# %%
 import random
 from copy import deepcopy
 import os
@@ -15,7 +15,7 @@ import readSintetic
 import pickle
 from GAUtils import oob_synthetic
 
-#%%
+# %%
 SINTETIC = False
 sparse = False
 seed = 1313
@@ -23,7 +23,7 @@ ensemble = 1  # for regression forest
 baseline_algorithm = 'reg'  # for baseline
 METHOD = 'spea2'
 
-#%%
+# %%
 random.seed(seed)
 
 readFilesTimer = ct.Timer(nome='Tempo Leitura Dataset')
@@ -45,7 +45,7 @@ persistFinalResultTimer = ct.Timer(
     nome='Tempo Para Persistir Dados no Final da Execução')
 
 
-#%%
+# %%
 def main(input_options):
 
     # Load dataset files
@@ -70,11 +70,10 @@ def main(input_options):
     readFilesTimer.start()
     X_train, y_train, query_id_train = load_L2R_file(
         './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'train' + '.txt', sparse)
-    #X_test, y_test, query_id_test = load_L2R_file(
+    # X_test, y_test, query_id_test = load_L2R_file(
     #    './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'test' + '.txt', sparse)
     X_vali, y_vali, query_id_vali = load_L2R_file(
         './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'vali' + '.txt', sparse)
-
 
     readFilesTimer.stop()
 
@@ -100,7 +99,25 @@ def main(input_options):
 
     model.estimators_ = np.array(model.estimators_)
 
+    if oob_predict:
+        model.oob_predict_buffer(X_train, y_train)
+
+    '''
+    import timeit
+
+    def wrapper(func, *args, **kwargs):
+        def wrapped():
+            return func(*args, **kwargs)
+        return wrapped
+    func = wrapper(model.oob_predict, X_train, y_train, '1' * 35)
+    time = timeit.timeit(func, number=1)
+    test1 = model.oob_predict(X_train, y_train, '1' * 35)
+
+    func2 = wrapper(model.oob_buffered_predict, list('1' * 35))
+    time2 = timeit.timeit(func2, number=1)
+    test2 = model.oob_buffered_predict(list('1'*35))
     #oob_synthetic(X_train, y_train, model)
+    '''
 
     readResultTimer.start()
     base_collection_name = f'./output/{output_folder}/Fold{fold}/chromosomeCollection'
@@ -173,12 +190,12 @@ def main(input_options):
         else:
             if oob_predict:
                 result = getEval(individuo_ga, model, n_trees, X_train, y_train,
-                                                     query_id_train,
-                                                     ensemble, n_trees, seed, dataset, fitness_metrics, fold, baseline_algorithm, oob_predict)
+                                 query_id_train,
+                                 ensemble, n_trees, seed, dataset, fitness_metrics, fold, baseline_algorithm, oob_predict)
             else:
                 result = getEval(individuo_ga, model, n_trees, X_vali, y_vali,
-                                                         query_id_vali,
-                                                         ensemble, n_trees, seed, dataset, fitness_metrics, fold, baseline_algorithm, oob_predict)
+                                 query_id_vali,
+                                 ensemble, n_trees, seed, dataset, fitness_metrics, fold, baseline_algorithm, oob_predict)
             base_collection[individuo_ga] = {}
             base_collection[individuo_ga]['NDCG'] = result[0]
             base_collection[individuo_ga]['GeoRisk'] = result[1]
@@ -221,7 +238,6 @@ def main(input_options):
     toolbox.register("selectTournament", tools.selTournament,
                      tournsize=tournament_size)
     paretoFront = tools.ParetoFront()
-    
 
     if METHOD == 'spea2':
         toolbox.register("select", tools.selSPEA2)

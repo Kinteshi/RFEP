@@ -40,14 +40,12 @@ class Forest(RandomForestRegressor):
             The predicted values.
         """
 
-        # temp = np.copy(self.estimators_)
         mask = [i == '1' for i in mask]
-
-        # self.estimators_ = self.estimators_[mask]
 
         self.n_outputs_ = 1
 
         check_is_fitted(self, 'estimators_')
+
         # Check data
         X = self._validate_X_predict(X)
 
@@ -79,7 +77,8 @@ class Forest(RandomForestRegressor):
 
     def oob_predict(self, X, y, genes):
         """
-        Compute out-of-bag prediction."""
+        Compute out-of-bag prediction.
+        """
         X = check_array(X, dtype=DTYPE, accept_sparse='csr')
 
         n_samples = y.shape[0]
@@ -113,6 +112,49 @@ class Forest(RandomForestRegressor):
         predictions /= n_predictions
         return predictions
 
+    def oob_predict_buffer(self, X, y):
+
+        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+
+        n_samples = X.shape[0]
+
+        n_samples_bootstrap = _get_n_samples_bootstrap(
+            n_samples, None
+        )
+
+        prediction_buffer = np.zeros(
+            (n_samples_bootstrap, len(self.estimators_)))
+
+        prediction_buffer[:, :] = np.nan
+
+        # Assign chunk of trees to jobs
+        n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
+
+        # Parallel loop
+        lock = threading.Lock()
+        Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                 **_joblib_parallel_args(require="sharedmem"))(
+            delayed(_oob_bufferize_prediction)(
+                e.predict, X, estimator, prediction_buffer, lock, n_samples, n_samples_bootstrap, self.n_outputs_, e.random_state)
+            for e, estimator in zip(self.estimators_, range(0, len(self.estimators_))))
+
+        self.prediction_buffer_ = prediction_buffer
+
+    def oob_buffered_predict(self, genes):
+
+        genes = np.array(genes)
+        estimators = np.where(genes == '1')[0]
+
+        y_hat = np.zeros((self.prediction_buffer_.shape[0]))
+
+        for sample in range(0, y_hat.shape[0]):
+            y_hat[sample] += np.nansum(
+                self.prediction_buffer_[sample, estimators])
+            y_hat[sample] /= (self.n_estimators -
+                              len(np.where(np.isnan(self.prediction_buffer_[sample, estimators]))[0]))
+
+        return y_hat
+
 
 def _oob_accumulate_prediction(predict, X, gene, out, lock, n_samples, n_samples_bootstrap, n_outputs_, random_state):
 
@@ -130,6 +172,17 @@ def _oob_accumulate_prediction(predict, X, gene, out, lock, n_samples, n_samples
             out[1][unsampled_indices, :] += 1
     else:
         pass
+
+
+def _oob_bufferize_prediction(predict, X, estimator, out, lock, n_samples, n_samples_bootstrap, n_outputs_, random_state):
+
+    unsampled_indices = _generate_unsampled_indices(
+        random_state, n_samples, n_samples_bootstrap)
+    p_estimator = predict(
+        X[unsampled_indices, :], check_input=False)
+
+    with lock:
+        out[unsampled_indices, estimator] = p_estimator
 
 
 def _accumulate_prediction_mod(predict, X, gene, out, lock):

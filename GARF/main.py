@@ -1,10 +1,11 @@
 from deapForL2r import main
+from resultAnalisis import generate_report, make_graphics, plot_pareto_front
 import shutil
 import sys
 import os
 import json
+import time
 
-from resultAnalisis import generate_report, make_graphics, plot_pareto_front
 
 input_file_path = os.getcwd() + '/' + sys.argv[1]
 assert os.path.exists(input_file_path), 'This file doesn\'t exist'
@@ -30,10 +31,12 @@ for experiment_options in options_dict:
         ident = experiment_options['outputOptions']['shortExperimentIdentifier']
         with open(f'./output/{ident}/Fold{fold}/config.json', 'w') as file:
             json.dump(experiment_options, file, indent=4)
-
+        start_time = time.time()
         main(experiment_options)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
         if experiment_options['outputOptions']['generateReport']:
-            generate_report(results_path, ident, fold)
+            generate_report(results_path, ident, fold, elapsed_time)
         if experiment_options['outputOptions']['generatePlots']:
             make_graphics(results_path, ident, fold)
             if len(experiment_options['geneticAlgorithmOptions']['fitnessMetrics']) > 1:
@@ -41,4 +44,3 @@ for experiment_options in options_dict:
     if experiment_options['outputOptions']['zipFiles']:
         shutil.make_archive(results_path + experiment_options['outputOptions']['shortExperimentIdentifier'], 'zip',
                             results_path + experiment_options['outputOptions']['shortExperimentIdentifier'])
-                            

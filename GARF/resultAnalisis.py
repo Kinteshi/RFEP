@@ -10,7 +10,7 @@ from evaluateIndividuoSerial import getEval
 from l2rCodesSerial import load_L2R_file
 
 
-def generate_report(path, identifier, fold):
+def generate_report(path, identifier, fold, elapsed_time):
     fold = str(fold)
 
     with open(path + f'{identifier}/Fold{fold}/config.json') as config_file:
@@ -113,6 +113,8 @@ def generate_report(path, identifier, fold):
     results['overallStats']['treesVariation'] = ((results['best']['numberOfTrees'] - results['original'][
         'numberOfTrees']) / results['original']['numberOfTrees']) * 100
 
+    results['overallStats']['elapsedTime'] = elapsed_time
+
     with open(path + f'{identifier}/Fold{fold}/resultReport.json', 'w') as result_file:
         json.dump(results, result_file, indent=4)
         result_file.close()
@@ -205,16 +207,26 @@ def make_graphics(path, identifier, fold):
     plt.savefig(f'{path}{identifier}/Fold{fold}/basicGen.png')
 
     ax.cla()
-    legend = []
-    for stat in ['var', 'std']:
-        ax.plot(stats_generations[stat])
-        legend.append(stat)
+    legend = ['var']
+    ax.plot(stats_generations['var'])
+    legend.append(stat)
 
     ax.set_ylabel('NDCG')
     ax.set_xlabel('Generations')
     ax.legend(legend)
     ax.set_title('NDCG by generation')
-    plt.savefig(f'{path}{identifier}/Fold{fold}/miscGen.png')
+    plt.savefig(f'{path}{identifier}/Fold{fold}/varGen.png')
+
+    ax.cla()
+    legend = ['std']
+    ax.plot(stats_generations['std'])
+    legend.append(stat)
+
+    ax.set_ylabel('NDCG')
+    ax.set_xlabel('Generations')
+    ax.legend(legend)
+    ax.set_title('NDCG by generation')
+    plt.savefig(f'{path}{identifier}/Fold{fold}/stdGen.png')
 
     ax.cla()
     legend = []
@@ -229,16 +241,25 @@ def make_graphics(path, identifier, fold):
     plt.savefig(f'{path}{identifier}/Fold{fold}/basicArchive.png')
 
     ax.cla()
-    legend = []
-    for stat in ['var', 'std']:
-        ax.plot(stats_archives[stat])
-        legend.append(stat)
+    legend = ['var']
+    ax.plot(stats_archives['var'])
 
     ax.set_ylabel('NDCG')
     ax.set_xlabel('Generations')
     ax.legend(legend)
     ax.set_title('NDCG by generation\'s archive')
-    plt.savefig(f'{path}{identifier}/Fold{fold}/miscArchive.png')
+    plt.savefig(f'{path}{identifier}/Fold{fold}/varArchive.png')
+
+    ax.cla()
+    legend = ['std']
+    ax.plot(stats_archives['std'])
+
+    ax.set_ylabel('NDCG')
+    ax.set_xlabel('Generations')
+    ax.legend(legend)
+    ax.set_title('NDCG by generation\'s archive')
+    plt.savefig(f'{path}{identifier}/Fold{fold}/stdArchive.png')
+
 
 def plot_pareto_front(path, identifier, fold):
     with open(f'{path}{identifier}/Fold{fold}/chromosomeCollectionParetoFront.json', 'r') as file:
@@ -271,9 +292,11 @@ def plot_pareto_front(path, identifier, fold):
     ax = fig.add_subplot()
 
     ax.scatter(georisk, ndcg, color='g')
-    ax.scatter(frontier_georisk, frontier_ndcg, color='b')
+    ax.scatter(frontier_georisk, frontier_ndcg, color='b', marker='+')
 
     ax.set_ylabel('NDCG')
     ax.set_xlabel('GeoRisk')
-    ax.set_title('Chromosome scatter')
+    ax.set_ylim(np.min(ndcg) + 0.01, np.max(ndcg) + 0.01)
+    ax.set_xlim(np.min(georisk) + 0.01, np.max(georisk) + 0.01)
+    ax.set_title('Pareto Front')
     plt.savefig(f'{path}{identifier}/Fold{fold}/paretoFront.png')

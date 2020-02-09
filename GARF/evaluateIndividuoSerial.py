@@ -12,7 +12,8 @@ def getEval(individuo, model, NUM_GENES, X, y, query_id_train, ENSEMBLE, NTREES,
 
     evaluation.append(queries)
     # evaluation.append(ndcg)
-    evaluation.append(np.round(getRisk(queries, DATASET, NUM_FOLD, ALGORITHM), 5))
+    evaluation.append(
+        np.round(getRisk(queries, DATASET, NUM_FOLD, ALGORITHM), 5))
     evaluation.append(getTotalFeature(individuo))
     #evaluation.append(getTRisk(queries, DATASET, NUM_FOLD, ALGORITHM))
 
@@ -83,7 +84,8 @@ def getPrecisionAndQueries(individuo, model, NUM_GENES, X, y, query_id, ENSEMBLE
 
     #queriesList = l2rCodesSerial.getQueries(query_id_train)
     if oob_predict:
-        resScore = model.oob_predict(X, y, list_mask)
+        #resScore = model.oob_predict(X, y, list_mask)
+        resScore = model.oob_buffered_predict(list_mask)
     else:
         resScore = model.predict(X, list_mask)
 
