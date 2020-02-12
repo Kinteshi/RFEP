@@ -75,7 +75,7 @@ class Forest(RandomForestRegressor):
 
         return y_hat
 
-    def oob_predict(self, X, y, genes):
+    def oob_predict(self, X, y, genes, parallel=True):
         """
         Compute out-of-bag prediction.
         """
@@ -92,16 +92,34 @@ class Forest(RandomForestRegressor):
 
         genes = [i == '1' for i in genes]
 
-        # Assign chunk of trees to jobs
-        n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
+        if parallel:
+            # Assign chunk of trees to jobs
+            n_jobs, _, _ = _partition_estimators(
+                self.n_estimators, self.n_jobs)
 
-        # Parallel loop
-        lock = threading.Lock()
-        Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                 **_joblib_parallel_args(require="sharedmem"))(
-            delayed(_oob_accumulate_prediction)(
-                e.predict, X, gene, [predictions, n_predictions], lock, n_samples, n_samples_bootstrap, self.n_outputs_, e.random_state)
-            for e, gene in zip(self.estimators_, genes))
+            # Parallel loop
+            lock = threading.Lock()
+            Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                     **_joblib_parallel_args(require="sharedmem"))(
+                delayed(_oob_accumulate_prediction)(
+                    e.predict, X, gene, [predictions, n_predictions], lock, n_samples, n_samples_bootstrap, self.n_outputs_, e.random_state)
+                for e, gene in zip(self.estimators_, genes))
+        else:
+            for e, gene in zip(self.estimators_, genes):
+                if gene:
+                    unsampled_indices = _generate_unsampled_indices(
+                        e.random_state, n_samples, n_samples_bootstrap)
+                    p_estimator = predict(
+                        X[unsampled_indices, :], check_input=False)
+
+                    if n_outputs_ == 1:
+                        p_estimator = p_estimator[:, np.newaxis]
+
+                    with lock:
+                        predictions[unsampled_indices, :] += p_estimator
+                        n_predictions[unsampled_indices, :] += 1
+                else:
+                    pass
 
         if (n_predictions == 0).any():
             warn("Some inputs do not have OOB scores. "
@@ -112,7 +130,7 @@ class Forest(RandomForestRegressor):
         predictions /= n_predictions
         return predictions
 
-    def oob_predict_buffer(self, X, y):
+    def oob_predict_buffer(self, X, y, parallel=True):
 
         X = check_array(X, dtype=DTYPE, accept_sparse='csr')
 
@@ -127,16 +145,25 @@ class Forest(RandomForestRegressor):
 
         prediction_buffer[:, :] = np.nan
 
-        # Assign chunk of trees to jobs
-        n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
+        if parallel:
+            # Assign chunk of trees to jobs
+            n_jobs, _, _ = _partition_estimators(
+                self.n_estimators, self.n_jobs)
 
-        # Parallel loop
-        lock = threading.Lock()
-        Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                 **_joblib_parallel_args(require="sharedmem"))(
-            delayed(_oob_bufferize_prediction)(
-                e.predict, X, estimator, prediction_buffer, lock, n_samples, n_samples_bootstrap, self.n_outputs_, e.random_state)
-            for e, estimator in zip(self.estimators_, range(0, len(self.estimators_))))
+            # Parallel loop
+            lock = threading.Lock()
+            Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                     **_joblib_parallel_args(require="sharedmem"))(
+                delayed(_oob_bufferize_prediction)(
+                    e.predict, X, estimator, prediction_buffer, lock, n_samples, n_samples_bootstrap, self.n_outputs_, e.random_state)
+                for e, estimator in zip(self.estimators_, range(0, len(self.estimators_))))
+        else:
+            for e, estimator in zip(self.estimators_, range(0, len(self.estimators_))):
+                unsampled_indices = _generate_unsampled_indices(
+                    e.random_state, n_samples, n_samples_bootstrap)
+                p_estimator = predict(
+                    X[unsampled_indices, :], check_input=False)
+                prediction_buffer[unsampled_indices, estimator] = p_estimator
 
         self.prediction_buffer_ = prediction_buffer
 
