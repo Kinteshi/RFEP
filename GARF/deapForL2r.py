@@ -99,8 +99,8 @@ def main(input_options):
 
     model.estimators_ = np.array(model.estimators_)
 
-    if oob_predict:
-        model.oob_predict_buffer(X_train, y_train)
+    # if oob_predict:
+    #    model.oob_predict_buffer(X_train, y_train)
 
     '''
     import timeit
@@ -199,8 +199,7 @@ def main(input_options):
             base_collection[individuo_ga] = {}
             base_collection[individuo_ga]['NDCG'] = result[0]
             base_collection[individuo_ga]['GeoRisk'] = result[1]
-            base_collection[individuo_ga]['feature'] = result[2]
-            #base_collection[individuo_ga]['TRisk'] = result[3]
+            #base_collection[individuo_ga]['TRisk'] = result[2]
             base_collection[individuo_ga]['geracao_s'] = current_generation_s
             base_collection[individuo_ga]['geracao_n'] = current_generation_n
             if METHOD == 'nsga2':
@@ -212,10 +211,8 @@ def main(input_options):
                 evaluation.append(result[0])
             if 'GeoRisk' in fitness_metrics:
                 evaluation.append(result[1])
-            if 'feature' in fitness_metrics:
-                evaluation.append(result[2])
             if 'TRisk' in fitness_metrics:
-                evaluation.append(result[3])
+                evaluation.append(result[2])
 
         avaliarTimer.stop()
         return evaluation
