@@ -24,14 +24,15 @@
         },
         "randomForestOptions": {
             "numberOfTrees": 35,
-            "oobPredict": true
+            "oobPredict": false
         },
         "outputOptions": {
             "experimentName": "Buffering",
             "shortExperimentIdentifier": "Buffering",
             "generatePlots": true,
             "generateReport": true,
-            "zipFiles": true
+            "zipFiles": true,
+            "runExperiment": false
         }
     }
 ]
