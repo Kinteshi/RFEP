@@ -38,8 +38,11 @@ for experiment_options in options_dict:
             elapsed_time = end_time - start_time
         else:
             with open(f'./output/{ident}/Fold{fold}/resultReport.json', 'r') as res_file:
-                elapsed_time = json.load(
-                    res_file)['overallStats']['elapsedTime']
+                try:
+                    elapsed_time = json.load(
+                        res_file)['overallStats']['elapsedTime']
+                except:
+                    elapsed_time = 0
                 res_file.close()
         if experiment_options['outputOptions']['generateReport']:
             generate_report(results_path, ident, fold, elapsed_time)
