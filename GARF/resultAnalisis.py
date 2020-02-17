@@ -8,6 +8,7 @@ import seaborn as sns
 from ScikitLearnModificado.forest import Forest
 from evaluateIndividuoSerial import getEval
 from l2rCodesSerial import load_L2R_file
+from rpy2 import robjects
 
 
 def generate_report(path, identifier, fold, elapsed_time):
@@ -89,9 +90,20 @@ def generate_report(path, identifier, fold, elapsed_time):
     results['best']['test'] = {}
 
     results['original']['validationNDCG'] = np.mean(original_validation[0])
+    results['original']['validationNDCGVector'] = original_validation[0].tolist()
+    results['original']['validationGeoRisk'] = original_validation[1]
+
     results['original']['testNDCG'] = np.mean(original_test[0])
+    results['original']['testNDCGVector'] = original_test[0].tolist()
+    results['original']['testGeoRisk'] = original_test[1]
+
     results['best']['validationNDCG'] = np.mean(best_validation[0])
+    results['best']['validationNDCGVector'] = best_validation[0].tolist()
+    results['best']['validationGeoRisk'] = best_validation[1]
+
     results['best']['testNDCG'] = np.mean(best_test[0])
+    results['best']['testNDCGVector'] = best_test[0].tolist()
+    results['best']['testGeoRisk'] = best_test[1]
 
     results['original']['numberOfTrees'] = n_genes
     results['best']['numberOfTrees'] = 0
@@ -109,6 +121,12 @@ def generate_report(path, identifier, fold, elapsed_time):
     results['overallStats']['testNDCGGain'] = ((results['best']['testNDCG'] -
                                                 results['original']['testNDCG']) /
                                                results['original']['testNDCG']) * 100
+
+    results['overallStats']['testGeoRisk'] = ((results['best']['testGeoRisk'] - results['original']['testGeoRisk']) /
+                                              results['original']['testGeoRisk']) * 100
+
+    results['overallStats']['validationGeoRisk'] = ((results['best']['validationGeoRisk'] - results['original'][
+        'validationGeoRisk']) / results['original']['validationGeoRisk']) * 100
 
     results['overallStats']['treesVariation'] = ((results['best']['numberOfTrees'] - results['original'][
         'numberOfTrees']) / results['original']['numberOfTrees']) * 100
@@ -300,3 +318,56 @@ def plot_pareto_front(path, identifier, fold):
     ax.set_xlim(np.min(georisk) + 0.01, np.max(georisk) + 0.01)
     ax.set_title('Pareto Front')
     plt.savefig(f'{path}{identifier}/Fold{fold}/paretoFront.png')
+
+
+def final_report(path, identifier):
+    folds = []
+
+    for fold in range(1, 6):
+        if os.path.exists(path + f'{identifier}/Fold{fold}/resultReport.json'):
+            with open(path + f'{identifier}/Fold{fold}/resultReport.json', 'r') as file:
+                folds.append(json.load(file))
+                file.close()
+        else:
+            pass
+
+    record = {}
+
+    record['initialNDCGVector'] = np.sum([fold['original']['testNDCGVector'] for fold in folds], axis=0) / len(folds)
+    record['initialNDCGVector'] = record['initialNDCGVector'].tolist()
+    record['initialNDCG'] = np.mean(record['initialNDCGVector'])
+
+    record['finalNDCGVector'] = np.sum([fold['best']['testNDCGVector'] for fold in folds], axis=0) / len(folds)
+    record['finalNDCGVector'] = record['finalNDCGVector'].tolist()
+    record['finalNDCG'] = np.mean(record['finalNDCGVector'])
+
+    record['initialGeoRisk'] = np.mean([fold['original']['testGeoRisk'] for fold in folds])
+    record['finalGeoRisk'] = np.mean([fold['best']['testGeoRisk'] for fold in folds])
+
+    record['initialForest'] = np.mean([fold['original']['numberOfTrees'] for fold in folds])
+    record['finalForest'] = np.mean([fold['best']['numberOfTrees'] for fold in folds])
+
+    record['overall'] = {}
+
+    record['overall']['pairedTest95%'] = compare(record['initialNDCGVector'], record['finalNDCGVector'])
+
+    record['overall']['ndcgGain'] = ((record['finalNDCG'] - record['initialNDCG']) / record['initialNDCG']) * 100
+    record['overall']['georiskGain'] = ((record['finalGeoRisk'] - record['initialGeoRisk']) / record['initialGeoRisk']) * 100
+
+    record['overall']['forest'] = ((record['finalForest'] - record['initialForest']) / record['initialForest']) * 100
+
+
+
+    with open(path + f'{identifier}/finalReport.json', 'w') as file:
+        json.dump(record, file, indent=4)
+        file.close()
+
+
+def compare(x_vet, y_vet, min_p_value=0.05):
+    # USANDO o R para calcular t-test
+    rd1 = (robjects.FloatVector(x_vet))
+    rd2 = (robjects.FloatVector(y_vet))
+    rvtest = robjects.r['t.test']
+    pvalue = rvtest(rd1, rd2, paired=True)[2][0]
+
+    return pvalue < min_p_value

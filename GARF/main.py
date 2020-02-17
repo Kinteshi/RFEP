@@ -1,5 +1,5 @@
 from deapForL2r import main
-from resultAnalisis import generate_report, make_graphics, plot_pareto_front
+from resultAnalisis import generate_report, make_graphics, plot_pareto_front, final_report
 import shutil
 import sys
 import os
@@ -29,18 +29,25 @@ for experiment_options in options_dict:
 
         experiment_options['datasetOptions']['fold'] = fold
         ident = experiment_options['outputOptions']['shortExperimentIdentifier']
-        with open(f'./output/{ident}/Fold{fold}/config.json', 'w') as file:
-            json.dump(experiment_options, file, indent=4)
-        start_time = time.time()
-        main(experiment_options)
-        end_time = time.time()
-        elapsed_time = end_time - start_time
+        if experiment_options['outputOptions']['runExperiment']:
+            with open(f'./output/{ident}/Fold{fold}/config.json', 'w') as file:
+                json.dump(experiment_options, file, indent=4)
+            start_time = time.time()
+            main(experiment_options)
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+        else:
+            with open(f'./output/{ident}/Fold{fold}/resultReport.json', 'r') as res_file:
+                elapsed_time = json.load(
+                    res_file)['overallStats']['elapsedTime']
+                res_file.close()
         if experiment_options['outputOptions']['generateReport']:
             generate_report(results_path, ident, fold, elapsed_time)
         if experiment_options['outputOptions']['generatePlots']:
             make_graphics(results_path, ident, fold)
             if len(experiment_options['geneticAlgorithmOptions']['fitnessMetrics']) > 1:
                 plot_pareto_front(results_path, ident, fold)
+    final_report(results_path, ident)
     if experiment_options['outputOptions']['zipFiles']:
         shutil.make_archive(results_path + experiment_options['outputOptions']['shortExperimentIdentifier'], 'zip',
                             results_path + experiment_options['outputOptions']['shortExperimentIdentifier'])
