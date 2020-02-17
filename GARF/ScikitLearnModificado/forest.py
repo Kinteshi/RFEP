@@ -140,7 +140,7 @@ class Forest(RandomForestRegressor):
         )
 
         prediction_buffer = np.zeros(
-            (n_samples_bootstrap, len(self.estimators_)), dyype='float32')
+            (n_samples_bootstrap, len(self.estimators_)), dtype='float32')
 
         prediction_buffer[:, :] = np.nan
 
