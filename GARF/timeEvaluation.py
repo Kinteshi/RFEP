@@ -38,6 +38,9 @@ py = psutil.Process(pid)
 
 # %%
 for forest in np.arange(100, 5100, 100):
+    X_train, y_train, query_id_train = load_L2R_file(
+        './dataset/' + dataset + '/Fold' + '1' + '/Norm.' + 'train' + '.txt', False)
+
     trees.append(forest)
 
     forest_path = os.getcwd() + '/output/forests/'
@@ -47,30 +50,28 @@ for forest in np.arange(100, 5100, 100):
     forest_path += f'{dataset}{seed}{forest}/'
 
     if not os.path.exists(forest_path + f'Fold{1}.pkl'):
-        X_train, y_train, query_id_train = load_L2R_file(
-            './dataset/' + dataset + '/Fold' + '1' + '/Norm.' + 'train' + '.txt', False)
         model = Forest(n_estimators=forest, max_features=0.3, max_leaf_nodes=100, min_samples_leaf=1,
                        random_state=seed, n_jobs=-1)
         model.fit(X_train, y_train)
 
-        with open(forest_path + f'Fold{1}.pkl', 'wb') as forest:
-            pickle.dump(model, forest)
-            forest.close()
+        with open(forest_path + f'Fold{1}.pkl', 'wb') as forests:
+            pickle.dump(model, forests)
+            forests.close()
     else:
-        with open(forest_path + f'Fold{1}.pkl', 'rb') as forest:
-            model = pickle.load(forest)
-            forest.close()
+        with open(forest_path + f'Fold{1}.pkl', 'rb') as forests:
+            model = pickle.load(forests)
+            forests.close()
 
     memoryUse = py.memory_info()[0] / 2.**30
     no_buffer_mem.append(memoryUse)
 
     evaluating = wrapper(model.oob_predict, X_train, y_train,
-                         '1'*forest, False)
+                         '1' * int(forest), False)
     time = timeit.timeit(evaluating, number=1)
     no_buffer_serial.append(time)
 
     evaluating = wrapper(model.oob_predict, X_train, y_train,
-                         '1'*forest, True)
+                         '1' * int(forest), True)
     time = timeit.timeit(evaluating, number=1)
     no_buffer_parallel.append(time)
 
@@ -81,15 +82,16 @@ for forest in np.arange(100, 5100, 100):
     buffer_mem.append(memoryUse)
 
     evaluating = wrapper(model.oob_buffered_predict, list(
-        '1'*forest))
+        '1' * int(forest)))
     time = timeit.timeit(evaluating, number=1)
-    buffer_serial = time
+    buffer_serial.append(time)
 
+    '''
     evaluating = wrapper(model.oob_buffered_predict, list(
-        '1'*forest), True)
+        '1'* int(forest)), True)
     time = timeit.timeit(evaluating, number=1)
-    buffer_parallel = time
-
+    buffer_parallel.append(time)
+    '''
     json_holder = {}
 
     json_holder['trees'] = [int(t) for t in trees]
@@ -100,7 +102,7 @@ for forest in np.arange(100, 5100, 100):
     json_holder['bufferCreation'] = buffer_creation
 
     json_holder['bufferSerial'] = buffer_serial
-    json_holder['bufferParallel'] = buffer_parallel
+    #json_holder['bufferParallel'] = buffer_parallel
 
     json_holder['bufferMem'] = buffer_mem
     json_holder['noBufferMem'] = no_buffer_mem
