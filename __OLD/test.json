@@ -32,7 +32,7 @@
             "generatePlots": true,
             "generateReport": true,
             "zipFiles": true,
-            "runExperiment": false
+            "runExperiment": true
         }
     }
 ]

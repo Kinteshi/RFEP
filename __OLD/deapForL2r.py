@@ -26,30 +26,15 @@ METHOD = 'spea2'
 # %%
 random.seed(seed)
 
-readFilesTimer = ct.Timer(nome='Tempo Leitura Dataset')
-convertToDataFrameTimer = ct.Timer(nome='Tempo Conversão Array to CUDF')
-readResultTimer = ct.Timer(nome='Tempo Leitura Fitness de Indivíduos Salvos')
-avaliarTimer = ct.Timer(nome='Tempo Avaliação Indivíduo')
-toolboxTimer = ct.Timer(nome='Tempo Criação das Classes da Toolbox')
-populacaoInicialTimer = ct.Timer(nome='Tempo Geração de Pop. Inicial')
-crossMutTimer = ct.Timer(nome='Tempo Crossover e Mutação')
-atribuicaoFitTimer = ct.Timer(nome='Tempo Manipulação de Fitness da Toolbox')
-methodTimer = ct.Timer(
-    nome='Tempo Para Seleção de Indivíduos de Acordo com o Método')
-persistResultTimer = ct.Timer(
-    nome='Tempo Persistência de Dados no meio da Execução')
-estatisticaGerTimer = ct.Timer(
-    nome='Tempo para Computar Estatísticas da Geração')
-printsTimer = ct.Timer(nome='Tempo para Printar Resultados')
-persistFinalResultTimer = ct.Timer(
-    nome='Tempo Para Persistir Dados no Final da Execução')
-
-
 # %%
+
+
 def main(input_options):
 
     # Load dataset files
     seed = input_options['generalOptions']['seed']
+
+    random.seed(seed)
 
     dataset = input_options['datasetOptions']['datasetName']
     fold = str(input_options['datasetOptions']['fold'])
@@ -67,15 +52,12 @@ def main(input_options):
 
     output_folder = input_options['outputOptions']['shortExperimentIdentifier']
 
-    readFilesTimer.start()
     X_train, y_train, query_id_train = load_L2R_file(
         './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'train' + '.txt', sparse)
     # X_test, y_test, query_id_test = load_L2R_file(
     #    './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'test' + '.txt', sparse)
     X_vali, y_vali, query_id_vali = load_L2R_file(
         './dataset/' + dataset + '/Fold' + fold + '/Norm.' + 'vali' + '.txt', sparse)
-
-    readFilesTimer.stop()
 
     forest_path = os.getcwd() + '/output/forests/'
     if not os.path.exists(forest_path + f'{dataset}{seed}{n_trees}/'):
@@ -102,24 +84,6 @@ def main(input_options):
     # if oob_predict:
     #    model.oob_predict_buffer(X_train, y_train)
 
-    '''
-    import timeit
-
-    def wrapper(func, *args, **kwargs):
-        def wrapped():
-            return func(*args, **kwargs)
-        return wrapped
-    func = wrapper(model.oob_predict, X_train, y_train, '1' * 35)
-    time = timeit.timeit(func, number=1)
-    test1 = model.oob_predict(X_train, y_train, '1' * 35)
-
-    func2 = wrapper(model.oob_buffered_predict, list('1' * 35))
-    time2 = timeit.timeit(func2, number=1)
-    test2 = model.oob_buffered_predict(list('1'*35))
-    #oob_synthetic(X_train, y_train, model)
-    '''
-
-    readResultTimer.start()
     base_collection_name = f'./output/{output_folder}/Fold{fold}/chromosomeCollection'
     base_collection = {}
 
@@ -136,22 +100,17 @@ def main(input_options):
                 except:
                     pass
 
-        printsTimer.start()
         print('A base tem ' + str(len(base_collection)) + ' indivíduos!\n')
-        printsTimer.stop()
-    except:
-        printsTimer.start()
-        print('Primeira vez executando ...')
-        printsTimer.stop()
 
-    readResultTimer.stop()
+    except:
+
+        print('Primeira vez executando ...')
 
     current_generation_s = 1
-    current_generation_n = 1
     archive_record = {}
 
     def evalIndividuo(individual):
-        avaliarTimer.start()
+
         evaluation = []
         individuo_ga = ''
         for i in range(n_trees):
@@ -161,8 +120,6 @@ def main(input_options):
                 evaluation.append(0)
             if 'GeoRisk' in fitness_metrics:
                 evaluation.append(0)
-            if 'feature' in fitness_metrics:
-                evaluation.append(n_trees)
             if 'TRisk' in fitness_metrics:
                 evaluation.append(0)
         elif individuo_ga in base_collection:
@@ -170,23 +127,8 @@ def main(input_options):
                 evaluation.append(base_collection[individuo_ga]['NDCG'])
             if 'GeoRisk' in fitness_metrics:
                 evaluation.append(base_collection[individuo_ga]['GeoRisk'])
-            if 'feature' in fitness_metrics:
-                evaluation.append(base_collection[individuo_ga]['feature'])
             if 'TRisk' in fitness_metrics:
                 evaluation.append(base_collection[individuo_ga]['TRisk'])
-
-            flag = False
-            if METHOD == "nsga2" and base_collection[individuo_ga]['method'] == 2:
-                flag = True
-            if METHOD == "spea2" and base_collection[individuo_ga]['method'] == 1:
-                flag = True
-            if flag:
-                base_collection[individuo_ga]['method'] = 3
-                if METHOD == 'nsga2':
-                    base_collection[individuo_ga]['geracao_n'] = current_generation_n
-                elif METHOD == 'spea2':
-                    base_collection[individuo_ga]['geracao_s'] = current_generation_s
-
         else:
             if oob_predict:
                 result = getEval(individuo_ga, model, n_trees, X_train, y_train,
@@ -201,11 +143,6 @@ def main(input_options):
             base_collection[individuo_ga]['GeoRisk'] = result[1]
             #base_collection[individuo_ga]['TRisk'] = result[2]
             base_collection[individuo_ga]['geracao_s'] = current_generation_s
-            base_collection[individuo_ga]['geracao_n'] = current_generation_n
-            if METHOD == 'nsga2':
-                base_collection[individuo_ga]['method'] = 1
-            elif METHOD == 'spea2':
-                base_collection[individuo_ga]['method'] = 2
 
             if 'NDCG' in fitness_metrics:
                 evaluation.append(result[0])
@@ -214,10 +151,8 @@ def main(input_options):
             if 'TRisk' in fitness_metrics:
                 evaluation.append(result[2])
 
-        avaliarTimer.stop()
         return evaluation
 
-    toolboxTimer.start()
     creator.create("MyFitness", base.Fitness,
                    weights=getWeights(fitness_metrics))
     creator.create("Individual", list, fitness=creator.MyFitness)
@@ -236,12 +171,7 @@ def main(input_options):
                      tournsize=tournament_size)
     paretoFront = tools.ParetoFront()
 
-    if METHOD == 'spea2':
-        toolbox.register("select", tools.selSPEA2)
-    elif METHOD == 'nsga2':
-        toolbox.register("select", tools.selNSGA2)
-    else:
-        Exception()
+    toolbox.register("select", tools.selSPEA2)
 
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("min", np.min, axis=0)
@@ -254,9 +184,6 @@ def main(input_options):
     # logbook.header = "gen", "evals", "std", "min", "avg", "max"
     logbook.header = "gen", "min", "max", "mean", "std"
 
-    toolboxTimer.stop()
-
-    populacaoInicialTimer.start()
     population = toolbox.population(n=population_size)
     if SINTETIC:
         list_individuos = readSintetic.get(dataset, fold, population_size)
@@ -265,61 +192,33 @@ def main(input_options):
             for indice_gene in range(n_trees):
                 population[indice_individuo][indice_gene] = temp_ind[indice_gene]
 
-    if METHOD == 'nsga2':
-        population = toolbox.select(population, population_size)
     archive = []
-    populacaoInicialTimer.stop()
 
     for gen in range(number_of_generations):
-        if METHOD == 'nsga2':
-            crossMutTimer.start()
-            offspring = algorithms.varAnd(
-                population, toolbox, cxpb=crossover_prob, mutpb=chromosome_mutation_prob)
-            crossMutTimer.stop()
 
-        if METHOD == 'nsga2':
-            fits = toolbox.map(toolbox.evaluate, population + offspring)
-            atribuicaoFitTimer.start()
-            for fit, ind in zip(fits, population + offspring):
-                ind.fitness.values = fit
-            atribuicaoFitTimer.stop()
+        fits = toolbox.map(toolbox.evaluate, population)
+        fitsA = toolbox.map(toolbox.evaluate, archive)
 
-        elif METHOD == 'spea2':
-            fits = toolbox.map(toolbox.evaluate, population)
-            fitsA = toolbox.map(toolbox.evaluate, archive)
-            atribuicaoFitTimer.start()
-            for fit, ind in zip(fits, population):
-                ind.fitness.values = fit
-            for fit, ind in zip(fitsA, archive):
-                ind.fitness.values = fit
-            atribuicaoFitTimer.stop()
+        for fit, ind in zip(fits, population):
+            ind.fitness.values = fit
+        for fit, ind in zip(fitsA, archive):
+            ind.fitness.values = fit
 
-        if METHOD == 'nsga2':
-            methodTimer.start()
-            population = toolbox.select(
-                population + offspring, k=population_size)
-            methodTimer.stop()
-        elif METHOD == 'spea2':
-            methodTimer.start()
-            archive = toolbox.select(population + archive, k=population_size)
-            methodTimer.stop()
+        archive = toolbox.select(population + archive, k=population_size)
 
-            mating_pool = toolbox.selectTournament(archive, k=population_size)
-            offspring_pool = map(toolbox.clone, mating_pool)
+        mating_pool = toolbox.selectTournament(archive, k=population_size)
+        offspring_pool = map(toolbox.clone, mating_pool)
 
-            crossMutTimer.start()
-            offspring_pool = algorithms.varAnd(
-                offspring_pool, toolbox, cxpb=crossover_prob, mutpb=chromosome_mutation_prob)
-            crossMutTimer.stop()
+        offspring_pool = algorithms.varAnd(
+            offspring_pool, toolbox, cxpb=crossover_prob, mutpb=chromosome_mutation_prob)
 
-            if len(fitness_metrics) > 1:
-                paretoFront.update(population)
+        if len(fitness_metrics) > 1:
+            paretoFront.update(population)
 
-            population = offspring_pool
+        population = offspring_pool
 
-            print(len(paretoFront))
+        print(len(paretoFront))
 
-        persistResultTimer.start()
         if gen % 5 == 0:
             TEMP_COLECAO_BASE = deepcopy(base_collection)
             for item in TEMP_COLECAO_BASE:
@@ -332,33 +231,15 @@ def main(input_options):
                         pass
             with open(base_collection_name + '.json', 'w+') as fp:
                 json.dump(TEMP_COLECAO_BASE, fp, indent=4)
-        persistResultTimer.stop()
 
-        estatisticaGerTimer.start()
-        # print(population)
-        # return 0
-        if METHOD == 'nsga2':
-            record = stats.compile(population)
-            current_generation_n += 1
-        elif METHOD == 'spea2':
-            record = stats.compile(archive)
-            archive_record[f'{current_generation_s}'] = archive
-            if len(fitness_metrics) > 1:
-                paretoFront.update(archive)
-            current_generation_s += 1
+        record = stats.compile(archive)
+        archive_record[f'{current_generation_s}'] = archive
+        if len(fitness_metrics) > 1:
+            paretoFront.update(archive)
+        current_generation_s += 1
         logbook.record(gen=gen, **record)
 
-        estatisticaGerTimer.stop()
-        printsTimer.start()
         print(logbook.stream)
-        printsTimer.stop()
-
-    # top10 = tools.selNSGA2(individuals=population, k=10)
-
-    # for ind in top10:
-    #     print(ind)
-    #     print(evalIndividuo(ind))
-    # print(top10)
 
     log_json = {}
     for i in range(len(logbook)):
@@ -373,7 +254,6 @@ def main(input_options):
     with open(base_collection_name + '-log.json', 'w') as fp:
         json.dump(log_json, fp, indent=4)
 
-    persistFinalResultTimer.start()
     TEMP_COLECAO_BASE = base_collection.copy()
     for item in TEMP_COLECAO_BASE:
         for att in TEMP_COLECAO_BASE[item]:
@@ -386,15 +266,6 @@ def main(input_options):
 
     with open(base_collection_name + '.json', 'w') as fp:
         json.dump(TEMP_COLECAO_BASE, fp, indent=4)
-    persistFinalResultTimer.stop()
-
-    # Dá pra fazer a evolução deles com as informações do logboook
-    # front = np.array([ind.fitness.values for ind in population])
-    # optimal_front = np.array(front)
-    # plt.scatter(optimal_front[:, 0], optimal_front[:, 1], c="r")
-    # plt.scatter(front[:, 0], front[:, 1], c="b")
-    # plt.axis("tight")
-    # plt.show()
 
     top = {}
     for j in range(0, len(fitness_metrics)):

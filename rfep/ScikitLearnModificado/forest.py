@@ -4,7 +4,6 @@ import pickle
 import threading
 from warnings import warn
 import os
-
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble.base import _partition_estimators
@@ -40,7 +39,7 @@ class Forest(RandomForestRegressor):
             The predicted values.
         """
 
-        mask = [i == '1' for i in mask]
+        mask = [i == '1' or i == 1 for i in mask]
 
         self.n_outputs_ = 1
 
@@ -90,7 +89,7 @@ class Forest(RandomForestRegressor):
             n_samples, None
         )
 
-        genes = [i == '1' for i in genes]
+        genes = [i == '1' or i == 1 for i in genes]
 
         if parallel:
             # Assign chunk of trees to jobs
