@@ -9,7 +9,7 @@ class Persist(ABC):
 
     def __init__(self, path, ext):
 
-        self.__path = Path(path)
+        self.path = Path(path)
         self.ext = ext
 
     def save(self, obj, filename, create_if_not_exists=True):
@@ -20,9 +20,9 @@ class Persist(ABC):
 
     def _check_path(self, create_if_not_exists=True):
 
-        if not self.__path.exists():
+        if not self.path.exists():
             if create_if_not_exists:
-                self.__path.mkdir(parents=True, exist_ok=True)
+                self.path.mkdir(parents=True, exist_ok=True)
                 return True
             else:
                 return False
@@ -31,7 +31,7 @@ class Persist(ABC):
 
     def set_path(path):
 
-        self.__path = Path(path)
+        self.path = Path(path)
 
 
 class ModelPersist(Persist):
@@ -41,7 +41,7 @@ class ModelPersist(Persist):
 
     def save(self, obj, filename, create_if_not_exists=True):
 
-        path = self.__path / (filename + self.ext)
+        path = self.path / (filename + self.ext)
 
         if self._check_path(create_if_not_exists):
             try:
@@ -53,7 +53,7 @@ class ModelPersist(Persist):
 
     def load(self, filename):
 
-        path = self.__path / (filename + self.ext)
+        path = self.path / (filename + self.ext)
 
         if path.exists():
             with open(path, 'rb') as handler:
@@ -71,7 +71,7 @@ class DictPersist(Persist):
 
     def save(self, obj, filename, create_if_not_exists=True):
 
-        path = self.__path / (filename + self.ext)
+        path = self.path / (filename + self.ext)
 
         if self._check_path(create_if_not_exists):
             try:
@@ -83,7 +83,7 @@ class DictPersist(Persist):
 
     def load(self, filename):
 
-        path = self.__path / (filename + self.ext)
+        path = self.path / (filename + self.ext)
 
         if path.exists():
             with open(path, 'r') as handler:
