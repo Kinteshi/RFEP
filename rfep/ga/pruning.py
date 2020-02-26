@@ -2,6 +2,7 @@ import random
 from ..ScikitLearnModificado.forest import Forest
 from deap import creator, base, tools, algorithms
 from .misc import _chromosome_to_key
+import time
 
 
 class GeneticAlgorithmRandomForest():
@@ -29,6 +30,7 @@ class GeneticAlgorithmRandomForest():
         self.__collection = None
         self.__archive = None
         self.__population = None
+        self.__elapsed_time = None
 
         self.__ga_setup()
         self.__model_setup()
@@ -121,6 +123,8 @@ class GeneticAlgorithmRandomForest():
             self.__archive = []
             self.__pareto_front.clear()
 
+        start = time.time()
+
         for gen in range(self.__last_gen, self.__last_gen + n_gen):
 
             fits_population = self.__toolbox.evaluate(
@@ -152,6 +156,10 @@ class GeneticAlgorithmRandomForest():
 
             self.__last_gen = gen
 
+        end = time.time()
+
+        self.__elapsed_time = end - start
+
         self.__persist_data()
 
         if len(self.__evaluator.metrics) < 2:
@@ -178,6 +186,7 @@ class GeneticAlgorithmRandomForest():
 
         self.__dict_persist.save(self.__population_bank, 'population_bank')
         self.__dict_persist.save(self.__archive_bank, 'archive_bank')
+        self.__dict_persist.save([self.__elapsed_time], 'elapsed_time')
 
         if len(self.__evaluator.metrics) > 1:
             pareto_front = [_chromosome_to_key(

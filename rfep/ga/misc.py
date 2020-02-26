@@ -28,7 +28,7 @@ class Persist(ABC):
                 return False
         else:
             return True
-    
+
     def set_path(path):
 
         self.__path = Path(path)
@@ -98,7 +98,7 @@ class DatasetHandler:
 
     def __init__(self, path):
 
-        self__path = path
+        self.__path = path
         self.X = None
         self.y = None
         self.query_id = None
