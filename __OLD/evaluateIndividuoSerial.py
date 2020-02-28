@@ -1,5 +1,6 @@
 import l2rCodesSerial
 import numpy as np
+from pathlib import Path
 from sklearn import model_selection
 
 
@@ -49,18 +50,19 @@ def getTotalFeature(individuo):
 
 # PRECISA SER CORRIGIDA SE HOUVER MAIS DE UM BASEINE
 def getRisk(queries, DATASET, NUM_FOLD, ALGORITHM):
-    base = []
+    matrix = []
 
-    arq = open(r'./baselines/' + DATASET + '/Fold' +
-               NUM_FOLD + '/' + ALGORITHM + '.txt')
-    for line in arq:
-        base.append([float(line.split()[0])])
-    basey = base.copy()
+    path = Path(f'baselines/{DATASET}/Fold{NUM_FOLD}')
 
-    for k in range(len(basey)):
-        basey[k].append(queries[k])
+    for file_name in path.glob('*.txt'):
+        with open((path / file_name), 'r') as file:
+            matrix.append([float(line.rstrip('\n')) for line in file])
+            file.close()
 
-    r = (l2rCodesSerial.getGeoRisk(np.array(basey), 5))[1]
+    matrix.append(queries)
+    matrix = np.transpose(matrix)
+
+    r = (l2rCodesSerial.getGeoRisk(matrix, 5))[1]
     return r
 
 

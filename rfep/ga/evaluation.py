@@ -73,4 +73,24 @@ class Evaluator:
             georisk = self.__evaluate_georisk(np.transpose(ndcg))
             evaluations.append(georisk)
 
+            for i, ind in enumerate(population):
+                if bank and _chromosome_to_key(ind) in bank:
+                    bank[_chromosome_to_key(ind)]['georisk'] = georisk[i]
+
         return zip(*evaluations)
+
+    def evaluate_compare(self, inds, model, matrix):
+
+        evaluations = []
+
+        ndcgs = []
+
+        for i, ind in enumerate(inds):
+            ndcg = self.__evaluate_ndcg(ind, model)
+            ndcgs.append(ndcg)
+            matrix[i-2, :] = ndcg[:]
+
+        georisk = self.__evaluate_georisk(matrix.transpose())
+        evaluations.append(georisk[-2:])
+
+        return zip(ndcgs, *evaluations)

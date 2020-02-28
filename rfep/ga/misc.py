@@ -29,7 +29,7 @@ class Persist(ABC):
         else:
             return True
 
-    def set_path(path):
+    def set_path(self, path):
 
         self.path = Path(path)
 

@@ -3,6 +3,7 @@ from ..ScikitLearnModificado.forest import Forest
 from deap import creator, base, tools, algorithms
 from .misc import _chromosome_to_key
 import time
+from .evaluation import Evaluator
 
 
 class GeneticAlgorithmRandomForest():
@@ -125,7 +126,14 @@ class GeneticAlgorithmRandomForest():
 
         start = time.time()
 
+        start_gen = self.__last_gen
+
         for gen in range(self.__last_gen, self.__last_gen + n_gen):
+
+            if (start_gen + n_gen - 1) == gen:
+                break
+
+            self.__last_gen = gen
 
             fits_population = self.__toolbox.evaluate(
                 self.__population, self.__model, bank=self.__population_bank)
@@ -149,17 +157,13 @@ class GeneticAlgorithmRandomForest():
             offspring_pool = algorithms.varAnd(
                 offspring_pool, self.__toolbox, cxpb=self.__cx_pb, mutpb=self.__ch_mut_pb)
 
-            if len(self.__evaluator.metrics) > 1:
-                self.__pareto_front.update(self.__population)
-
             self.__population = offspring_pool
 
-            self.__last_gen = gen
+            if len(self.__evaluator.metrics) > 1:
+                self.__pareto_front.update(self.__archive)
 
         end = time.time()
-
         self.__elapsed_time = end - start
-
         self.__persist_data()
 
         if len(self.__evaluator.metrics) < 2:
@@ -169,15 +173,18 @@ class GeneticAlgorithmRandomForest():
 
     def __bank(self):
 
-        self.__archive_bank[f'{self.__last_gen}'] = self.__archive
+        self.__archive_bank[f'{self.__last_gen}'] = [
+            _chromosome_to_key(ind) for ind in self.__archive]
 
         for ind in self.__population:
-            self.__population_bank[_chromosome_to_key(ind)] = {}
+            key = _chromosome_to_key(ind)
+            if key in self.__population_bank:
+                continue
+            self.__population_bank[key] = {}
             for i in range(0, len(self.__evaluator.metrics)):
-                self.__population_bank[_chromosome_to_key(
-                    ind)][self.__evaluator.metrics[i]] = ind.fitness.values[i].tolist()
-            self.__population_bank[_chromosome_to_key(
-                ind)]['generated'] = self.__last_gen
+                self.__population_bank[key][self.__evaluator.metrics[i]
+                                            ] = ind.fitness.values[i].tolist()
+            self.__population_bank[key]['generated'] = self.__last_gen
 
     def __persist_data(self):
 
@@ -195,6 +202,8 @@ class GeneticAlgorithmRandomForest():
         else:
             best = self.get_best_ind()
             self.__dict_persist.save(best, 'best_ind')
+
+        #self.__model_persist.save(self, 'object_dict')
 
     def get_pareto_front(self):
 

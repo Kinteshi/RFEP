@@ -333,30 +333,38 @@ def final_report(path, identifier):
 
     record = {}
 
-    record['initialNDCGVector'] = np.sum([fold['original']['testNDCGVector'] for fold in folds], axis=0) / len(folds)
+    record['initialNDCGVector'] = np.array(
+        [fold['original']['testNDCGVector'] for fold in folds]).flatten()
     record['initialNDCGVector'] = record['initialNDCGVector'].tolist()
     record['initialNDCG'] = np.mean(record['initialNDCGVector'])
 
-    record['finalNDCGVector'] = np.sum([fold['best']['testNDCGVector'] for fold in folds], axis=0) / len(folds)
+    record['finalNDCGVector'] = np.array(
+        [fold['best']['testNDCGVector'] for fold in folds]).flatten()
     record['finalNDCGVector'] = record['finalNDCGVector'].tolist()
     record['finalNDCG'] = np.mean(record['finalNDCGVector'])
 
-    record['initialGeoRisk'] = np.mean([fold['original']['testGeoRisk'] for fold in folds])
-    record['finalGeoRisk'] = np.mean([fold['best']['testGeoRisk'] for fold in folds])
+    record['initialGeoRisk'] = np.mean(
+        [fold['original']['testGeoRisk'] for fold in folds])
+    record['finalGeoRisk'] = np.mean(
+        [fold['best']['testGeoRisk'] for fold in folds])
 
-    record['initialForest'] = np.mean([fold['original']['numberOfTrees'] for fold in folds])
-    record['finalForest'] = np.mean([fold['best']['numberOfTrees'] for fold in folds])
+    record['initialForest'] = np.mean(
+        [fold['original']['numberOfTrees'] for fold in folds])
+    record['finalForest'] = np.mean(
+        [fold['best']['numberOfTrees'] for fold in folds])
 
     record['overall'] = {}
 
-    record['overall']['pairedTest95%'] = compare(record['initialNDCGVector'], record['finalNDCGVector'])
+    record['overall']['pairedTest95%'] = compare(
+        record['initialNDCGVector'], record['finalNDCGVector'])
 
-    record['overall']['ndcgGain'] = ((record['finalNDCG'] - record['initialNDCG']) / record['initialNDCG']) * 100
-    record['overall']['georiskGain'] = ((record['finalGeoRisk'] - record['initialGeoRisk']) / record['initialGeoRisk']) * 100
+    record['overall']['ndcgGain'] = (
+        (record['finalNDCG'] - record['initialNDCG']) / record['initialNDCG']) * 100
+    record['overall']['georiskGain'] = (
+        (record['finalGeoRisk'] - record['initialGeoRisk']) / record['initialGeoRisk']) * 100
 
-    record['overall']['forest'] = ((record['finalForest'] - record['initialForest']) / record['initialForest']) * 100
-
-
+    record['overall']['forest'] = (
+        (record['finalForest'] - record['initialForest']) / record['initialForest']) * 100
 
     with open(path + f'{identifier}/finalReport.json', 'w') as file:
         json.dump(record, file, indent=4)
