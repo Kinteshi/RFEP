@@ -233,7 +233,7 @@ def main(input_options):
                 json.dump(TEMP_COLECAO_BASE, fp, indent=4)
 
         record = stats.compile(archive)
-        archive_record[f'{current_generation_s}'] = archive
+        archive_record[f'{current_generation_s}'] = [''.join(map(str, chromosome)) for chromosome in archive]
         if len(fitness_metrics) > 1:
             paretoFront.update(archive)
         current_generation_s += 1

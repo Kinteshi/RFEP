@@ -51,18 +51,18 @@ def getTotalFeature(individuo):
 # PRECISA SER CORRIGIDA SE HOUVER MAIS DE UM BASEINE
 def getRisk(queries, DATASET, NUM_FOLD, ALGORITHM):
     matrix = []
+    matrix.append(queries)
 
     path = Path(f'baselines/{DATASET}/Fold{NUM_FOLD}')
 
     for file_name in path.glob('*.txt'):
-        with open((path / file_name), 'r') as file:
+        with open((file_name), 'r') as file:
             matrix.append([float(line.rstrip('\n')) for line in file])
             file.close()
 
-    matrix.append(queries)
     matrix = np.transpose(matrix)
 
-    r = (l2rCodesSerial.getGeoRisk(matrix, 5))[1]
+    r = (l2rCodesSerial.getGeoRisk(matrix, 5))[0]
     return r
 
 

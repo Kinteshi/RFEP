@@ -4,6 +4,7 @@ from deap import creator, base, tools, algorithms
 from .misc import _chromosome_to_key
 import time
 from .evaluation import Evaluator
+from copy import deepcopy
 
 
 class GeneticAlgorithmRandomForest():
@@ -25,6 +26,7 @@ class GeneticAlgorithmRandomForest():
 
         self.__archive_bank = {}
         self.__population_bank = {}
+        self.__pareto_front_bank = {}
         self.__last_gen = 0
 
         self.__model = None
@@ -109,7 +111,8 @@ class GeneticAlgorithmRandomForest():
         '''
         if self.__dict_persist:
             try:
-                self.__population_bank = self.__dict_persist.load('population_bank')
+                self.__population_bank = self.__dict_persist.load(
+                    'population_bank')
             except:
                 pass
         '''
@@ -126,12 +129,7 @@ class GeneticAlgorithmRandomForest():
 
         start = time.time()
 
-        start_gen = self.__last_gen
-
         for gen in range(self.__last_gen, self.__last_gen + n_gen):
-
-            if (start_gen + n_gen - 1) == gen:
-                break
 
             self.__last_gen = gen
 
@@ -145,13 +143,18 @@ class GeneticAlgorithmRandomForest():
             for fit, ind in zip(fits_archive, self.__archive):
                 ind.fitness.values = fit
 
-            self.__bank()
+            self.__bank__chromosomes()
+
+            # self.__duplicate_elimination()
 
             self.__archive = self.__toolbox.select(
                 self.__population + self.__archive, k=self.__pop_size)
 
+            self.__bank_archive()
+
             mating_pool = self.__toolbox.selectTournament(
                 self.__archive, k=self.__pop_size)
+
             offspring_pool = map(self.__toolbox.clone, mating_pool)
 
             offspring_pool = algorithms.varAnd(
@@ -160,7 +163,9 @@ class GeneticAlgorithmRandomForest():
             self.__population = offspring_pool
 
             if len(self.__evaluator.metrics) > 1:
+                self.__pareto_front.clear()
                 self.__pareto_front.update(self.__archive)
+                self.__bank_pareto_front()
 
         end = time.time()
         self.__elapsed_time = end - start
@@ -171,10 +176,12 @@ class GeneticAlgorithmRandomForest():
         else:
             return list(self.__pareto_front)
 
-    def __bank(self):
+    def __bank_archive(self):
 
         self.__archive_bank[f'{self.__last_gen}'] = [
             _chromosome_to_key(ind) for ind in self.__archive]
+
+    def __bank__chromosomes(self):
 
         for ind in self.__population:
             key = _chromosome_to_key(ind)
@@ -185,6 +192,11 @@ class GeneticAlgorithmRandomForest():
                 self.__population_bank[key][self.__evaluator.metrics[i]
                                             ] = ind.fitness.values[i].tolist()
             self.__population_bank[key]['generated'] = self.__last_gen
+
+    def __bank_pareto_front(self):
+
+        self.__pareto_front_bank[f'{self.__last_gen}'] = list(set([
+            _chromosome_to_key(ind) for ind in self.__pareto_front]))
 
     def __persist_data(self):
 
@@ -199,11 +211,11 @@ class GeneticAlgorithmRandomForest():
             pareto_front = [_chromosome_to_key(
                 ind) for ind in list(self.__pareto_front)]
             self.__dict_persist.save(pareto_front, 'pareto_front')
+            self.__dict_persist.save(
+                self.__pareto_front_bank, 'pareto_front_bank')
         else:
             best = self.get_best_ind()
             self.__dict_persist.save(best, 'best_ind')
-
-        #self.__model_persist.save(self, 'object_dict')
 
     def get_pareto_front(self):
 
@@ -229,3 +241,9 @@ class GeneticAlgorithmRandomForest():
                     bigger = i
 
         return _chromosome_to_key(self.__archive[bigger])
+
+    def __duplicate_elimination(self):
+
+        for ind in self.__population:
+            if ind in self.__archive:
+                self.__archive.remove(ind)

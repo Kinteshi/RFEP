@@ -13,7 +13,7 @@
                 "NDCG",
                 "GeoRisk"
             ],
-            "generationNumber": 10,
+            "generationNumber": 5,
             "populationNumber": 10
         },
         "datasetOptions": {
@@ -23,7 +23,7 @@
             ]
         },
         "randomForestOptions": {
-            "numberOfTrees": 35,
+            "numberOfTrees": 20,
             "oobPredict": false
         },
         "outputOptions": {

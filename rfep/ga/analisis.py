@@ -3,6 +3,8 @@ from .misc import DictPersist, ModelPersist
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+import json
+from rpy2 import robjects
 
 
 class Analyst():
@@ -22,7 +24,7 @@ class Analyst():
         self.__model = self.__model_persist.load(
             f'Fold{fold}/{self.__n_trees}{self.__seed}')
 
-    def __process_fold(self, fold):
+    def __process_folds(self, fold):
 
         self.__load_model(fold)
 
@@ -106,12 +108,17 @@ class Analyst():
 
             gens = range(0, len(maximum))
 
+            sns.set()
+            sns.set_style('darkgrid')
+            sns.set_context('talk')
+            sns.set_palette('deep')
+
             fig = plt.figure(figsize=(15, 10))
             ax = fig.add_subplot()
 
-            ax.plot(gens, maximum, label='Max', color='blue')
-            ax.plot(gens, mean, label='Mean', color='red')
-            ax.plot(gens, minimum, label='Minimum', color='green')
+            ax.plot(gens, maximum, label='Max')
+            ax.plot(gens, mean, label='Mean')
+            ax.plot(gens, minimum, label='Minimum')
 
             ax.grid(True)
             ax.legend(loc='upper left')
@@ -153,5 +160,57 @@ class Analyst():
         comparisons = []
 
         for fold in folds:
-            comparisons.append(self.__process_fold(fold))
+            comparisons.append(self.__process_folds(fold))
             self.__plot_evolution(fold)
+
+    def final_report(self):
+
+        folds = []
+
+        for file_name in self.__dict_persist.path.rglob('fold_comparison.json'):
+            with open(file_name, 'r') as file:
+                folds.append(json.load(file))
+                file.close()
+
+        ndcg = {'initial': [], 'final': []}
+        georisk = {'initial': [], 'final': []}
+        n_trees = {'initial': [], 'final': []}
+
+        for fold in folds:
+            for ind in ['initial', 'final']:
+                ndcg[ind].append(fold[ind]['ndcg'])
+                georisk[ind].append(fold[ind]['georisk'])
+                n_trees[ind].append(fold[ind]['n_trees'])
+
+        for ind in ['initial', 'final']:
+            ndcg[ind] = np.array(ndcg[ind]).flatten()
+
+        comparison = {}
+
+        comparison['ndcg_equal'] = compare(ndcg['initial'], ndcg['final'])
+
+        # comparison['georisk_equal'] = compare(
+        #    georisk['initial'], georisk['final'])
+
+        ndcg['initial'] = np.mean(ndcg['initial'])
+        ndcg['final'] = np.mean(ndcg['final'])
+        georisk['initial'] = np.mean(georisk['initial'])
+        georisk['final'] = np.mean(georisk['final'])
+        n_trees['initial'] = np.mean(n_trees['initial'])
+        n_trees['final'] = np.mean(n_trees['final'])
+
+        comparison['ndcg'] = ndcg
+        comparison['georisk'] = georisk
+        comparison['n_trees'] = n_trees
+
+        self.__dict_persist.save(comparison, 'final_report')
+
+
+def compare(x_vet, y_vet, min_p_value=0.05):
+    # USANDO o R para calcular t-test
+    rd1 = (robjects.FloatVector(x_vet))
+    rd2 = (robjects.FloatVector(y_vet))
+    rvtest = robjects.r['t.test']
+    pvalue = rvtest(rd1, rd2, paired=True)[2][0]
+
+    return pvalue < min_p_value
