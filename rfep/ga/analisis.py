@@ -1,5 +1,6 @@
 from pathlib import Path
-from .misc import DictPersist, ModelPersist
+from .misc import DictPersist, ModelPersist, DatasetHandler
+from .evaluation import Evaluator
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -9,22 +10,26 @@ from rpy2 import robjects
 
 class Analyst():
 
-    def __init__(self, mp, dp, ev, baselines_path, n_trees, seed):
+    def __init__(self, objectives, weights, mp, dp, baselines_path, dataset_name, n_trees, seed):
 
         self.__dict_persist = dp
         self.__model_persist = mp
         self.__model = None
-        self.__evaluator = ev
+        self.__evaluator = None
+        self.__dataset_handler = None
+        self.dataset_name = dataset_name
         self.baselines_path = baselines_path
         self.__n_trees = n_trees
         self.__seed = seed
+        self.__objectives = objectives
+        self.__weights = weights
 
     def __load_model(self, fold):
 
         self.__model = self.__model_persist.load(
             f'Fold{fold}/{self.__n_trees}{self.__seed}')
 
-    def __process_folds(self, fold):
+    def __process_fold(self, fold):
 
         self.__load_model(fold)
 
@@ -58,7 +63,7 @@ class Analyst():
         report['initial']['ndcg_mean'] = np.mean(report['initial']['ndcg'])
         report['final']['ndcg_mean'] = np.mean(report['final']['ndcg'])
 
-        self.__dict_persist.save(report, f'Fold{1}/fold_comparison')
+        self.__dict_persist.save(report, f'Fold{fold}/fold_comparison')
 
         return evaluations
 
@@ -160,8 +165,14 @@ class Analyst():
         comparisons = []
 
         for fold in folds:
+            test = DatasetHandler(
+                f'data/dataset/{self.__dataset_name}/Fold{fold}/Norm.test.txt')
+            test.load()
+            self.__evaluator = Evaluator(self.__objectives, self.__weights,
+                                         self.__dataset_name, test.X, test.y, test.query_id)
             comparisons.append(self.__process_folds(fold))
             self.__plot_evolution(fold)
+            del self.__evaluator
 
     def final_report(self):
 

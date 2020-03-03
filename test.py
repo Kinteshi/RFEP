@@ -45,14 +45,9 @@ for fold in folds:
     ga.evolve_model(n_gen)
 
 # %%
-test = DatasetHandler(
-    f'data/dataset/{dataset_name}/Fold{fold}/Norm.test.txt')
-test.load()
-test_ev = Evaluator(objectives, weights,
-                    dataset_name, test.X, test.y, test.query_id)
 test_mp = ModelPersist(f'output/forests/{dataset_name}')
 test_dp = DictPersist(f'output/{run_name}')
-an = Analyst(test_mp, test_dp, test_ev,
-             f'data/baselines/{dataset_name}', n_trees, seed)
+an = Analyst(objectives, weights, test_mp, test_dp
+             f'data/baselines/{dataset_name}', dataset_name, n_trees, seed)
 an.report(folds)
 an.final_report()

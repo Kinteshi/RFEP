@@ -152,7 +152,7 @@ def main(input_options):
                 evaluation.append(result[2])
 
         return evaluation
-
+    random.seed(seed)
     creator.create("MyFitness", base.Fitness,
                    weights=getWeights(fitness_metrics))
     creator.create("Individual", list, fitness=creator.MyFitness)
@@ -233,7 +233,8 @@ def main(input_options):
                 json.dump(TEMP_COLECAO_BASE, fp, indent=4)
 
         record = stats.compile(archive)
-        archive_record[f'{current_generation_s}'] = [''.join(map(str, chromosome)) for chromosome in archive]
+        archive_record[f'{current_generation_s}'] = [
+            ''.join(map(str, chromosome)) for chromosome in archive]
         if len(fitness_metrics) > 1:
             paretoFront.update(archive)
         current_generation_s += 1

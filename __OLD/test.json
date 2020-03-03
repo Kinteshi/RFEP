@@ -10,8 +10,7 @@
             "geneMutationProbability": 0.5,
             "tournamentSize": 2,
             "fitnessMetrics": [
-                "NDCG",
-                "GeoRisk"
+                "NDCG"
             ],
             "generationNumber": 5,
             "populationNumber": 10

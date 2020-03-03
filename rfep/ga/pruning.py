@@ -35,8 +35,8 @@ class GeneticAlgorithmRandomForest():
         self.__population = None
         self.__elapsed_time = None
 
-        self.__ga_setup()
         self.__model_setup()
+        self.__ga_setup()
 
     def __model_setup(self):
 
@@ -79,6 +79,8 @@ class GeneticAlgorithmRandomForest():
 
     def __ga_setup(self):
 
+        # random.seed(self.__seed)
+
         self.__creator = creator
         self.__creator.create('myFitness', base.Fitness,
                               weights=self.__evaluator.weights)
@@ -99,6 +101,7 @@ class GeneticAlgorithmRandomForest():
                                 indpb=self.__g_mut_pb)
         self.__toolbox.register("selectTournament", tools.selTournament,
                                 tournsize=self.__tour_size)
+
         self.__pareto_front = tools.ParetoFront()
 
         self.__toolbox.register("select", tools.selSPEA2)
@@ -119,7 +122,7 @@ class GeneticAlgorithmRandomForest():
 
     def evolve_model(self, n_gen=0, warm_start=False):
 
-        if not warm_start:
+        if not warm_start and self.__last_gen != 0:
             self.__population_bank = {}
             self.__archive_bank = {}
             self.__last_gen = 0
