@@ -3,7 +3,7 @@ from rfep.ga.evaluation import Evaluator
 from rfep.ga.misc import DatasetHandler, ModelPersist, DictPersist
 from rfep.ga.pruning import GeneticAlgorithmRandomForest
 from rfep.ga.analisis import Analyst
-
+import shutil
 
 # %%
 
@@ -51,3 +51,7 @@ an = Analyst(objectives, weights, test_mp, test_dp
              f'data/baselines/{dataset_name}', dataset_name, n_trees, seed)
 an.report(folds)
 an.final_report()
+
+# %%
+
+shutil.make_archive(f'output/{run_name}', 'zip', f'output/{run_name}')
