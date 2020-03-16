@@ -17,7 +17,7 @@ class Analyst():
         self.__model = None
         self.__evaluator = None
         self.__dataset_handler = None
-        self.dataset_name = dataset_name
+        self.__dataset_name = dataset_name
         self.baselines_path = baselines_path
         self.__n_trees = n_trees
         self.__seed = seed

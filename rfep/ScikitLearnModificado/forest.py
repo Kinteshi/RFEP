@@ -14,7 +14,8 @@ from sklearn.tree._tree import issparse, DOUBLE, DTYPE
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.utils.validation import check_is_fitted
-
+import time
+import multiprocessing as mp
 
 class Forest(RandomForestRegressor):
 
@@ -159,39 +160,18 @@ class Forest(RandomForestRegressor):
             for e, estimator in zip(self.estimators_, range(0, len(self.estimators_))):
                 unsampled_indices = _generate_unsampled_indices(
                     e.random_state, n_samples, n_samples_bootstrap)
-                p_estimator = predict(
-                    X[unsampled_indices, :], check_input=False)
+                p_estimator = e.predict(X[unsampled_indices, :], check_input=False)
                 prediction_buffer[unsampled_indices, estimator] = p_estimator
 
-        self.prediction_buffer_ = prediction_buffer
+        self.prediction_buffer_ = mp.Array(prediction_buffer)
 
     def oob_buffered_predict(self, genes, parallel=False):
 
         genes = np.array(genes)
-        estimators = np.where(genes == '1')[0]
 
-        y_hat = np.zeros((self.prediction_buffer_.shape[0]))
+        estimators = genes == 1
 
-        if not parallel:
-
-            for sample in range(0, y_hat.shape[0]):
-                y_hat[sample] += np.nansum(
-                    self.prediction_buffer_[sample, estimators])
-                y_hat[sample] /= (self.n_estimators -
-                                  len(np.where(np.isnan(self.prediction_buffer_[sample, estimators]))[0]))
-        else:
-            n_jobs, _, _ = _partition_estimators(
-                self.prediction_buffer_.shape[0], self.n_jobs)
-
-            lock = threading.Lock()
-
-            Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                     **_joblib_parallel_args(require="sharedmem"))(
-                delayed(_oob_accumulate_buffered_prediction)(
-                    self.prediction_buffer_, sample, estimators, self.n_estimators, y_hat, lock)
-                for sample in range(0, y_hat.shape[0]))
-
-        return y_hat
+        return np.nanmean(self.prediction_buffer_[:, estimators], axis=1)
 
 
 def _oob_accumulate_buffered_prediction(buffer, sample, estimators, n_estimators, out, lock):

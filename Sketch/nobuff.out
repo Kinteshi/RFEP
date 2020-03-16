@@ -1,0 +1,34 @@
+/usr/local/lib/python3.7/site-packages/sklearn/externals/joblib/__init__.py:15: DeprecationWarning: sklearn.externals.joblib is deprecated in 0.21 and will be removed in 0.23. Please import this functionality directly from joblib, which can be installed with: pip install joblib. If this warning is raised when loading pickled models, you may need to re-serialize those models with scikit-learn 0.21+.
+  warnings.warn(msg, category=DeprecationWarning)
+|Evaluate==>113.63006472587585|
+|Evaluate==>108.52133822441101|
+|Evaluate==>108.53728222846985|
+|Evaluate==>109.60275888442993|
+|Evaluate==>109.11950445175171|
+|Evaluate==>108.64269304275513|
+|Evaluate==>109.08500409126282|
+|Evaluate==>108.5862352848053|
+|Evaluate==>109.31955051422119|
+|Evaluate==>109.18900871276855|
+|Gen0==>1097.443736076355|
+|Evaluate==>110.68350839614868|
+|Evaluate==>109.03127121925354|
+|Evaluate==>109.2172589302063|
+|Evaluate==>109.92860269546509|
+|Evaluate==>108.6668860912323|
+|Evaluate==>110.35555672645569|
+|Evaluate==>109.5620129108429|
+|Evaluate==>109.61555123329163|
+|Evaluate==>110.83408665657043|
+|Evaluate==>107.4366729259491|
+|Gen1==>1105.4133265018463|
+|Evaluate==>111.03057169914246|
+|Evaluate==>108.87865376472473|
+|Evaluate==>109.78024315834045|
+|Evaluate==>109.03203439712524|
+|Evaluate==>109.85741519927979|
+|Evaluate==>110.05234479904175|
+|Evaluate==>108.54960179328918|
+|Evaluate==>110.13329291343689|
+|Evaluate==>109.74003911018372|
+|Gen2==>998.2945284843445|

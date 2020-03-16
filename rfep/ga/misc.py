@@ -1,6 +1,7 @@
 from pathlib import Path
 from abc import ABC
 import pickle
+import dill
 import json
 from ..l2r.l2rCodes import load_L2R_file
 
@@ -46,7 +47,7 @@ class ModelPersist(Persist):
         if self._check_path(create_if_not_exists):
             try:
                 with open(path, 'wb') as handler:
-                    pickle.dump(obj, handler)
+                    dill.dump(obj, handler)
                     handler.close()
             except IOError:
                 raise IOError('Unable to save')
@@ -57,7 +58,7 @@ class ModelPersist(Persist):
 
         if path.exists():
             with open(path, 'rb') as handler:
-                model = pickle.load(handler)
+                model = dill.load(handler)
                 handler.close()
             return model
         else:

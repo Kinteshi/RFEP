@@ -8,13 +8,13 @@ from rfep.ga.analisis import Analyst
 import shutil
 
 # %%
-dataset_name = '2003_td_dataset'
+dataset_name = 'web10k'
 folds = [1]
 evolution_set = 'train'
 oob_evolution = True
 buffered = True
-n_gen = 5
-n_trees = 20
+n_gen = 3
+n_trees = 5000
 pop_size = 10
 seed = 2567
 

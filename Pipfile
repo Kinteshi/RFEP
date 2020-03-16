@@ -1,0 +1,22 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pylint = "*"
+
+[packages]
+sklearn = "*"
+numpy = "*"
+matplotlib = "*"
+pandas = "*"
+seaborn = "*"
+deap = {git = "https://github.com/Haiga/deap"}
+rpy2 = {path = "./rpy2-2.9.5-cp37-cp37m-win_amd64.whl"}
+dill = "*"
+numexpr = "*"
+ray = "*"
+
+[requires]
+python_version = "3.7"

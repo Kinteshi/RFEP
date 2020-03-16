@@ -1,7 +1,8 @@
 from ..l2r.l2rCodes import getEvaluation, getGeoRisk, getQueries
 import numpy as np
+import multiprocessing as mp
 from .misc import _chromosome_to_key
-
+import time
 
 class Evaluator:
 
@@ -15,6 +16,7 @@ class Evaluator:
         self.__queries_dataset = __queries_dataset
         self._oob = _oob
         self.parallel = parallel
+        self.__predict_method = None
 
         try:
             self.__validate_metrics()
@@ -39,34 +41,58 @@ class Evaluator:
         else:
             ValueError('The specified metrics cannot be evaluated')
 
-    def __evaluate_ndcg(self, ind, model):
+    def set_predict_method(self, method):
 
-        if self._oob:
-            scores = model.oob_predict(
-                self.__X_dataset, self.__y_dataset, ind, self.parallel)
+        self.__predict_method = method
+
+
+
+    def __evaluate_ndcg(self, bank, ind):
+
+        if bank and _chromosome_to_key(ind) in bank:
+            return np.array(
+                bank[_chromosome_to_key(ind)]['ndcg'])
         else:
-            scores = model.predict(self.__X_dataset, list(ind))
+            scores = self.__predict_method(ind)
 
-        return getEvaluation(
-            scores, self.__queries_dataset, self.__y_dataset, self.dataset_name, 'ndcg', 'test')[1]
+            ndcg = getEvaluation(
+                scores, self.__queries_dataset, self.__y_dataset, self.dataset_name, 'ndcg', 'test')[1]
+            return ndcg
 
     def __evaluate_georisk(self, matrix, alpha=5):
 
         return getGeoRisk(matrix, alpha)
 
-    def evaluate(self, population, model, bank=None):
+    def evaluate(self, population, bank=None):
 
         evaluations = []
 
         if 'ndcg' in self.metrics:
 
             ndcg = np.zeros((len(population), len(self.__n_queries)))
+
+            queue = mp.Queue()
+            jobs = []
+            results = []
             for i in range(0, len(population)):
-                if bank and _chromosome_to_key(population[i]) in bank:
+                process = mp.Process(target=self.__evaluate_ndcg,
+                                  args=(bank, list(population[i])))
+                jobs.append(process)
+                process.start()
+                '''if bank and _chromosome_to_key(population[i]) in bank:
                     ndcg[i, :] = np.array(
                         bank[_chromosome_to_key(population[i])]['ndcg'])
                 else:
-                    ndcg[i, :] = self.__evaluate_ndcg(population[i], model)
+                    ndcg[i, :] = self.__evaluate_ndcg(list(population[i]))'''
+
+            for i in range(0, len(population)):
+                ndcg[i, :] = queue.get()
+
+            queue.close()
+
+            for j in jobs:
+                j.join()
+
             evaluations.append(ndcg)
 
         if 'georisk' in self.metrics and 'ndcg' in self.metrics:
@@ -94,3 +120,12 @@ class Evaluator:
         evaluations.append(georisk[-2:])
 
         return zip(ndcgs, *evaluations)
+
+
+def _eval_ind(e_function, ind, bank, model):
+
+    if bank and _chromosome_to_key(ind) in bank:
+        return np.array(
+            bank[_chromosome_to_key(ind)]['ndcg'])
+    else:
+        return e_function(ind, model.oob_buffered_predict)
