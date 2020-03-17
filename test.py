@@ -7,6 +7,20 @@ from functools import partial
 from rfep.ga.analisis import Analyst
 import shutil
 
+# %% [markdown]
+# Instructions
+
+## Setup
+
+### Directories
+
+
+### Model training params
+
+dataset_name
+
+
+
 # %%
 dataset_name = '2003_td_dataset'
 folds = [1]
