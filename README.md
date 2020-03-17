@@ -4,13 +4,17 @@
 
 - Requires Python 3.7 and above
 - Requires R to be installed
-- `rpy2` Python package that can be found inside this repository
-- `deap` Python package forked by Haiga in https://github.com/Haiga/deap
+- `rpy2` Python package that can be found in:
+    > https://www.lfd.uci.edu/~gohlke/pythonlibs/
+- `deap` Python package forked by Haiga in:
+
+    >https://github.com/Haiga/deap
+    
+    Or it can be installed directly with:
 
     > `pip install git+https://github.com/Haiga/deap#egg=deap` 
 
-- `dill` Python package is necesary as well
-- `sklearn`, `numpy`, `matplotlib` and `seaborn` are required as well
+- `sklearn`, `dill`, `numpy`, `matplotlib` and `seaborn` are required as well
 
 ## Instructions
 

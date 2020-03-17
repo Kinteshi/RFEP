@@ -333,3 +333,5 @@ data/baselines/youtube/Fold4/.gitignore
 data/baselines/youtube/Fold4/reg.txt
 data/baselines/youtube/Fold4/rf.txt
 data/baselines/youtube/Fold5/.gitignore
+Sketch/test_time.py
+Sketch/test.py
