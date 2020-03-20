@@ -45,19 +45,14 @@ class Evaluator:
 
         self.__predict_method = method
 
+    def __get_scores(self, ind):
 
+        return self.__predict_method(ind)
 
-    def __evaluate_ndcg(self, bank, ind):
+    def __evaluate_ndcg(self, scores):
 
-        if bank and _chromosome_to_key(ind) in bank:
-            return np.array(
-                bank[_chromosome_to_key(ind)]['ndcg'])
-        else:
-            scores = self.__predict_method(ind)
-
-            ndcg = getEvaluation(
-                scores, self.__queries_dataset, self.__y_dataset, self.dataset_name, 'ndcg', 'test')[1]
-            return ndcg
+        return getEvaluation(
+            scores, self.__queries_dataset, self.__y_dataset, self.dataset_name, 'ndcg')[1]
 
     def __evaluate_georisk(self, matrix, alpha=5):
 
@@ -71,27 +66,13 @@ class Evaluator:
 
             ndcg = np.zeros((len(population), len(self.__n_queries)))
 
-            queue = mp.Queue()
-            jobs = []
-            results = []
             for i in range(0, len(population)):
-                process = mp.Process(target=self.__evaluate_ndcg,
-                                  args=(bank, list(population[i])))
-                jobs.append(process)
-                process.start()
-                '''if bank and _chromosome_to_key(population[i]) in bank:
+                if bank and _chromosome_to_key(population[i]) in bank:
                     ndcg[i, :] = np.array(
                         bank[_chromosome_to_key(population[i])]['ndcg'])
                 else:
-                    ndcg[i, :] = self.__evaluate_ndcg(list(population[i]))'''
-
-            for i in range(0, len(population)):
-                ndcg[i, :] = queue.get()
-
-            queue.close()
-
-            for j in jobs:
-                j.join()
+                    scores = self.__get_scores(list(population[i]))
+                    ndcg[i, :] = self.__evaluate_ndcg(scores)
 
             evaluations.append(ndcg)
 
@@ -105,14 +86,14 @@ class Evaluator:
 
         return zip(*evaluations)
 
-    def evaluate_compare(self, inds, model, matrix):
+    def evaluate_compare(self, inds, matrix):
 
         evaluations = []
 
         ndcgs = []
 
         for i, ind in enumerate(inds):
-            ndcg = self.__evaluate_ndcg(ind, model)
+            ndcg = self.__evaluate_ndcg(self.__get_scores(ind))
             ndcgs.append(ndcg)
             matrix[i-2, :] = ndcg[:]
 

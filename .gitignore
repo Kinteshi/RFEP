@@ -335,3 +335,4 @@ data/baselines/youtube/Fold4/rf.txt
 data/baselines/youtube/Fold5/.gitignore
 Sketch/
 test.py
+/Sketch/

@@ -1,5 +1,5 @@
 from pathlib import Path
-from .misc import DictPersist, ModelPersist, DatasetHandler
+from .misc import DatasetHandler
 from .evaluation import Evaluator
 import numpy as np
 import seaborn as sns
@@ -84,7 +84,7 @@ class Analyst():
             new_matrix[i, :] = np.array(matrix[i])
 
         evaluations = self.__evaluator.evaluate_compare(
-            ['1'*len(self.__best), self.__best], self.__model, new_matrix)
+            ['1'*len(self.__best), self.__best], new_matrix)
 
         return evaluations
 
@@ -170,7 +170,7 @@ class Analyst():
             test.load()
             self.__evaluator = Evaluator(self.__objectives, self.__weights,
                                          self.__dataset_name, test.X, test.y, test.query_id)
-            comparisons.append(self.__process_folds(fold))
+            comparisons.append(self.__process_fold(fold))
             self.__plot_evolution(fold)
             del self.__evaluator
 

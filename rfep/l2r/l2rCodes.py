@@ -157,7 +157,7 @@ def ndcg(arrayLabel, dataset):
     return round(NDCGAt10, 4)
 
 
-def getEvaluation(score, listQ, label, trainFile, metric, resultPrefix):
+def getEvaluation(score, listQ, label, trainFile, metric):
     dataset = ""
     if "web10k" in trainFile:
         dataset = "web10k"

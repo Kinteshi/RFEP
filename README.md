@@ -8,7 +8,7 @@
     > https://www.lfd.uci.edu/~gohlke/pythonlibs/
 - `deap` Python package forked by Haiga in:
 
-    >https://github.com/Haiga/deap
+    > https://github.com/Haiga/deap
     
     Or it can be installed directly with:
 
@@ -25,7 +25,7 @@
 To use this model training package some assets are needed. Those are:
 
 - A L2R  dataset:
-    > Ex.: web10k, web30k, yahoo, 2003_td_dataset)
+    > Ex.: web10k, web30k, yahoo, 2003_td_dataset
 - Baselines for the specific dataset
 - k-fold structured dataset
 

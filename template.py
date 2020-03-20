@@ -18,6 +18,7 @@ n_gen = 5  # int :: Number of generations to compute
 n_trees = 20  # int :: Size of the ensemble forest
 pop_size = 10  # int :: Size of the population in each generation
 seed = 2567  # int :: Random seed to reproduce similar results, mostly for the forest to be the same. Irrelevant to the evolution
+n_slices = 300 # int :: Number os slices to split the data in order to optimize parallel buffered prediction (Each slice must provide something close to 0.05GB or less)
 
 # list[str] :: List of metrics to use. As of now it is obligatory to contain 'ndcg', but can also contain 'georisk' along with it
 objectives = ['ndcg', 'georisk']
@@ -73,11 +74,11 @@ for fold in folds:
             # This next line creates the buffer
             model.oob_predict_buffer(train.X, train.y)
 
-            p_method = partial(model.oob_buffered_predict)
+            p_method = partial(model.oob_buffered_predict, n_slices)
         else:
             p_method = partial(model.oob_predict, train.X, train.y)
     else:
-        p_method = partial(model.oob_predict, eset.X, eset.y)
+        p_method = partial(model.predict, eset.X)
 
     # The evaluator class takes care of the evaluation
     ev = Evaluator(objectives, weights,

@@ -1,21 +1,19 @@
 # coding=utf-8
 import numbers
-import pickle
 import threading
 from warnings import warn
-import os
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble.base import _partition_estimators
-from sklearn.ensemble.forest import MAX_INT, _parallel_build_trees, _accumulate_prediction
-from sklearn.exceptions import DataConversionWarning
-from sklearn.externals.joblib import Parallel, delayed
 from sklearn.tree._tree import issparse, DOUBLE, DTYPE
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.utils.validation import check_is_fitted
 import time
-import multiprocessing as mp
+from joblib import Parallel, load, delayed, dump
+import os
+import tempfile
+import gc
 
 class Forest(RandomForestRegressor):
 
@@ -163,23 +161,22 @@ class Forest(RandomForestRegressor):
                 p_estimator = e.predict(X[unsampled_indices, :], check_input=False)
                 prediction_buffer[unsampled_indices, estimator] = p_estimator
 
-        self.prediction_buffer_ = mp.Array(prediction_buffer)
+        self.__buffer = prediction_buffer
 
-    def oob_buffered_predict(self, genes, parallel=False):
-
-        genes = np.array(genes)
+    def oob_buffered_predict(self, n_slices, ind):
+        start = time.time()
+        genes = np.array(ind)
 
         estimators = genes == 1
 
-        return np.nanmean(self.prediction_buffer_[:, estimators], axis=1)
+        chunks = np.array_split(np.arange(0, len(self.__buffer)), n_slices)
 
+        res = Parallel(n_jobs=-1, verbose=5, require='sharedmem', max_nbytes=None)(delayed(np.nanmean)(self.__buffer[samples.min():samples.max()+1:, estimators], axis=1) for samples in chunks)
+        res = np.concatenate(res).ravel()
 
-def _oob_accumulate_buffered_prediction(buffer, sample, estimators, n_estimators, out, lock):
+        print(f'{time.time()-start}')
 
-    with lock:
-        out[sample] += np.nansum(buffer[sample, estimators])
-        out[sample] /= (n_estimators -
-                        len(np.where(np.isnan(buffer[sample, estimators]))[0]))
+        return res
 
 
 def _oob_accumulate_prediction(predict, X, gene, out, lock, n_samples, n_samples_bootstrap, n_outputs_, random_state):
